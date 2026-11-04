@@ -259,3 +259,38 @@ Date:   Wed Nov 4 19:01:37 2026 +0530
 [LOG UPDATED: Phase 0 Completed]
 ===============================================================================
 
+
+
+---
+
+## 4. Phase 1 & Phase 2: Relational DDL Schema (`sql/01_schema.sql`)
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 1 (ER: 2 Marks), Component 2 (Schema/BCNF: 3 Marks), Component 3 (DDL Constraints: 4 Marks)
+- **Engine**: MySQL 8.0 InnoDB | `utf8mb4_unicode_ci`
+- **Total Tables**: 20 Relational Entities
+
+### Key Schema Design Highlights:
+1. **Mathematical Conservation in Inventory**:
+   ```sql
+   CONSTRAINT chk_inventory_conservation CHECK (available_quantity + reserved_holds + sold_quantity = total_allocated)
+   ```
+2. **Immutable Double-Entry Ledger Protection**:
+   ```sql
+   CONSTRAINT chk_ledger_amount_positive CHECK (amount > 0.00),
+   CONSTRAINT chk_ledger_balance_after_nonneg CHECK (balance_after >= 0.00)
+   ```
+3. **Self-Referential Taxonomy & Referral Trees**:
+   - `categories` uses `parent_id` referencing `categories(category_id)` for arbitrary hierarchical depth.
+   - `referrals` uses `referrer_id` and `referee_id` referencing `users(user_id)` with `CHECK (referrer_id <> referee_id)`.
+4. **Referential Integrity Actions**:
+   - `ON DELETE RESTRICT` for financial and inventory assets to prevent orphaned or deleted audit records.
+   - `ON DELETE CASCADE` for line-items (`order_items`) and dependent child telemetry.
+
+### Verification Runbook:
+```powershell
+# Execute the complete schema against MySQL 8
+mysql -u root -p flashdrop < sql/01_schema.sql
+
+# Verify all 20 tables are created
+mysql -u root -p -e "USE flashdrop; SHOW TABLES;"
+```
