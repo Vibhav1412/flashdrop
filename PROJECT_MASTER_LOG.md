@@ -294,3 +294,23 @@ mysql -u root -p flashdrop < sql/01_schema.sql
 # Verify all 20 tables are created
 mysql -u root -p -e "USE flashdrop; SHOW TABLES;"
 ```
+
+
+---
+
+## 5. Phase 2: DML Seed Script (`sql/02_seed.sql`)
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 6: DML Operations (High-Volume Realistic Seed Data - 4 Marks)
+- **Scale**: 1,000+ Users, 1,000 Wallets, 1,150+ Ledger records, 5,000+ Concurrency telemetry entries.
+
+### DML Generation Methodology:
+- **Procedural Batch Generation (`sp_seed_bulk_data`)**: Implements deterministic SQL loops to seed thousands of records within an explicit transactional envelope.
+- **Double-Entry Ledger Invariance**: For every wallet and order debit, matching `wallet_ledger` records are created where `balance_after` precisely reflects the updated balance.
+- **Inventory Conservation**: For every drop, `available_quantity + reserved_holds + sold_quantity = total_allocated`.
+- **Recursive Hierarchy Depth**: Multi-tier categories and multi-level viral referral chains (`user_2 -> user_3 -> user_4 ...`) designed for testing recursive CTEs.
+
+### Verification Runbook:
+```powershell
+# Execute seed script against MySQL 8
+Get-Content sql\02_seed.sql -Raw | mysql -u root -p flashdrop
+```
