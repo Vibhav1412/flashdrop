@@ -314,3 +314,29 @@ mysql -u root -p -e "USE flashdrop; SHOW TABLES;"
 # Execute seed script against MySQL 8
 Get-Content sql\02_seed.sql -Raw | mysql -u root -p flashdrop
 ```
+
+
+---
+
+## 6. Phase 3: Comprehensive SQL Query Suite (`sql/09_queries.sql`)
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 7: Queries (Joins, Nested, Correlated, Recursive CTEs - 4 Marks)
+- **Scope**: 17 Production-grade queries spanning all relational operations.
+
+### Query Highlights:
+1. **Multi-Table Joins**: 5-table inner join pulling order line-items and payment transactions.
+2. **Correlated Subqueries (`EXISTS` / `NOT EXISTS`)**: Bot telemetry anomaly detection and VIP balance filtration.
+3. **Recursive CTEs**:
+   - `CategoryHierarchy`: Traversal from root categories down to leaf elements, assembling `breadcrumb_path`.
+   - `ReferralLineage`: Viral tree traversal computing invite chain depth and lineage strings.
+4. **Window Functions (OLAP)**:
+   - `ROW_NUMBER()`, `RANK()`, `DENSE_RANK()` comparison on wallet balances.
+   - `LAG()` computing microsecond gaps between rapid checkout attempts to expose automated bot scripts.
+   - Running cumulative revenue per drop via `SUM() OVER (...)`.
+5. **JSON Path Extraction**: Filtering sneakers via `attributes_json->>'$.size'`.
+
+### Verification Runbook:
+```powershell
+# Run the complete query suite against MySQL 8
+Get-Content sql\09_queries.sql -Raw | mysql -u root -p flashdrop
+```

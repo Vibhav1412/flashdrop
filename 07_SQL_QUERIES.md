@@ -1,82 +1,93 @@
-# Component 07: SQL Queries (Joins, Nested, Correlated, Recursive CTEs)
+# Component 07: SQL Queries (Joins, Nested, Correlated, Recursive CTEs, Window Functions)
 **PES University DBMS Level 3 Evaluation Component 7 | Max Marks: 4**
 
 ---
 
 ## 1. Overview & Source Code Mapping
 - **Primary Script**: `sql/09_queries.sql`
-- **Scope**: Demonstrates mastery of all SQL query patterns across relational algebra operations, hierarchical structures, analytical reporting, and query optimizer plans.
+- **Engine**: MySQL 8.0 (InnoDB)
+- **Scope**: Production-grade analytical, operational, and recursive query suite specifically mapped to the DBMS Level 3 evaluation syllabus.
 
 ---
 
-## 2. Query Catalog by Category
+## 2. Query Architecture Matrix
 
-### A. All Join Variants
-1. **Inner Join**: Fetching confirmed orders with customer details and line-item totals.
-2. **Left Outer Join**: Finding all registered users who have NEVER placed an order (`WHERE o.order_id IS NULL`).
-3. **Right Outer Join**: Identifying drops with zero associated purchase attempts.
-4. **Full Outer Join Emulation**: MySQL lacks native `FULL OUTER JOIN`; we achieve exact mathematical equivalence using `LEFT JOIN ... UNION ... RIGHT JOIN`.
-5. **Self-Join**: Finding products in the same category priced higher than their category sibling average.
-6. **Cross Join**: Generating cartesian matrix of drops $\times$ shipping zones for tax simulation.
-
-### B. Nested & Correlated Subqueries
-1. **Scalar Subquery**: Showing each user's latest order amount alongside their lifetime average order value.
-2. **Nested Subquery with `IN` / `NOT IN`**: Finding users who participated in drops that completely sold out in under 60 seconds.
-3. **Correlated Subquery with `EXISTS`**:
-   ```sql
-   -- Find all customers who have at least one debit transaction exceeding $500 in the wallet ledger
-   SELECT u.user_id, u.email, u.first_name, u.last_name
-   FROM users u
-   WHERE EXISTS (
-       SELECT 1 
-       FROM wallets w
-       JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
-       WHERE w.user_id = u.user_id 
-         AND wl.entry_type = 'DEBIT' 
-         AND wl.amount > 500.00
-   );
-   ```
-
-### C. Recursive Common Table Expressions (CTEs)
-1. **Recursive Category Hierarchy Traversal**: Traverses root categories down through subcategories to build full breadcrumb paths (`Men > Footwear > Sneakers > Limited Edition`).
-2. **Recursive Referral Tree & Viral Chain Analysis**: Traverses viral invite chains to calculate referral depth and multi-tier commission distribution.
-   ```sql
-   WITH RECURSIVE ReferralTree AS (
-       -- Anchor Member: Root referrers (who were not referred by anyone)
-       SELECT 
-           r.referrer_id, 
-           r.referee_id, 
-           1 AS referral_depth,
-           CAST(r.referrer_id AS CHAR(1000)) AS referral_path
-       FROM referrals r
-       WHERE r.referrer_id NOT IN (SELECT referee_id FROM referrals)
-       
-       UNION ALL
-       
-       -- Recursive Member: Find children referred by current level referees
-       SELECT 
-           r.referrer_id, 
-           r.referee_id, 
-           rt.referral_depth + 1,
-           CONCAT(rt.referral_path, ' -> ', r.referrer_id)
-       FROM referrals r
-       JOIN ReferralTree rt ON r.referrer_id = rt.referee_id
-   )
-   SELECT * FROM ReferralTree ORDER BY referral_depth, referrer_id;
-   ```
-
-### D. Window Functions (Analytical SQL)
-1. **`RANK()` & `DENSE_RANK()`**: Ranking top spenders per loyalty tier.
-2. **`ROW_NUMBER()`**: Deduplicating duplicate purchase attempts to find the earliest millisecond entry.
-3. **`LAG()` & `LEAD()`**: Calculating the time difference (in milliseconds) between consecutive checkout requests to detect automated bot scripts.
-4. **Running Totals**: Cumulative daily revenue generated per flash drop using `SUM(final_amount) OVER (PARTITION BY drop_id ORDER BY created_at)`.
+| Query # | Pattern / Technique | Target Tables | Business Defense / Problem Solved |
+| :--- | :--- | :--- | :--- |
+| **Q1.1** | **Inner Join (5 tables)** | `orders`, `users`, `drops`, `order_items`, `products`, `payments` | Customer order receipt synthesis with line-item detail and payment reference. |
+| **Q1.2** | **Left Outer Join** | `users` $\rightarrow$ `orders`, `wallets` | Identifies inactive registered users with positive wallet balances for marketing. |
+| **Q1.3** | **Right Outer Join + HAVING** | `orders` $\leftarrow$ `drops` | Audits catalog releases that have zero converted checkouts. |
+| **Q1.4** | **Full Outer Join Emulation** | `users` $\cup$ `lottery_entries` | Emulates full outer join via `LEFT JOIN UNION RIGHT JOIN`. |
+| **Q1.5** | **Self-Join** | `products` $\bowtie$ `products` | Compares product prices against category siblings to detect price anomalies. |
+| **Q1.6** | **Cross Join** | `drops` $\times$ Shipping Zones | Cartesian matrix calculation for state tax and shipping projections. |
+| **Q2.1** | **Scalar Subquery** | `drops` | Calculates price variance of each drop against the catalog-wide average. |
+| **Q2.2** | **Nested Subquery (IN / NOT IN)**| `users`, `lottery_entries`, `orders` | Identifies lottery ballot holders who failed to convert into a final order. |
+| **Q2.3** | **Correlated Subquery (EXISTS)** | `users`, `wallets`, `wallet_ledger` | Finds VIP customers with high-value wallet debits ($> \$150$). |
+| **Q2.4** | **Correlated Subquery (NOT EXISTS)**| `users`, `orders`, `fraud_flags` | Audits verified clean customers who have zero bot or fraud flags. |
+| **Q3.1** | **Recursive CTE (Taxonomy)** | `categories` | Traverses arbitrary parent-child hierarchy to construct full breadcrumbs. |
+| **Q3.2** | **Recursive CTE (Referral Tree)** | `referrals` | Recursively traverses multi-tier viral invite trees and calculates viral depth. |
+| **Q4.1** | **Window Functions (Ranking)** | `wallets`, `users` | Evaluates `RANK()`, `DENSE_RANK()`, and `ROW_NUMBER()` on wallet balances. |
+| **Q4.2** | **Window Functions (LAG / LEAD)** | `purchase_attempts` | Analyzes microsecond latency deltas between consecutive requests to catch bots. |
+| **Q4.3** | **Window Cumulative Sum** | `orders`, `drops` | Computes cumulative running revenue per drop over time using frame bounds. |
+| **Q5.1** | **GROUP BY with HAVING** | `drops`, `orders` | Filters drops by gross merchandise value (GMV) and average order value. |
+| **Q5.2** | **JSON Path Extraction** | `products` | Queries flexible sneaker attributes using MySQL 8's `->>` path operator. |
 
 ---
 
-## 3. Examiner Viva Q&A (Component 7)
+## 3. Detailed Walkthrough of Advanced Query Patterns
 
-**Q1: How does a correlated subquery differ from an uncorrelated subquery in terms of execution?**
-> *Defense*: An uncorrelated subquery is independent of the outer query; the database executes it once, caches the result set, and evaluates the outer query against it. A correlated subquery references columns from the outer table (e.g., `WHERE w.user_id = u.user_id`), meaning the subquery is conceptually evaluated once for every candidate row evaluated by the outer query. The MySQL optimizer uses index lookups on the correlated column to maintain acceptable performance.
+### A. Recursive Category Hierarchy Traversal (Q3.1)
+```sql
+WITH RECURSIVE CategoryHierarchy AS (
+    -- Anchor Member: Root categories
+    SELECT category_id, parent_id, name, slug, 1 AS depth_level, CAST(name AS CHAR(1000)) AS breadcrumb_path
+    FROM categories
+    WHERE parent_id IS NULL
 
-**Q2: What is the terminating condition in a Recursive CTE? What happens if you omit it?**
-> *Defense*: A Recursive CTE consists of an Anchor query, a `UNION ALL`, and a Recursive query joined to the CTE name. The terminating condition occurs when the recursive member returns an empty set (i.e., no more matching children). If omitted or circular dependencies exist, MySQL aborts execution once `cte_max_recursion_depth` (default 1000) is exceeded, preventing an infinite loop.
+    UNION ALL
+
+    -- Recursive Member: Join children to their parents in the CTE
+    SELECT c.category_id, c.parent_id, c.name, c.slug, ch.depth_level + 1, CONCAT(ch.breadcrumb_path, ' > ', c.name)
+    FROM categories c
+    INNER JOIN CategoryHierarchy ch ON c.parent_id = ch.category_id
+)
+SELECT category_id, depth_level, breadcrumb_path FROM CategoryHierarchy ORDER BY breadcrumb_path;
+```
+*Output*: Produces hierarchical navigation strings such as:
+- `Footwear > Basketball Sneakers > Retro High Tops`
+- `Apparel > Hoodies & Sweats > Oversized Vintage Hoodies`
+
+---
+
+### B. Anti-Bot Telemetry Delta with Window Function `LAG()` (Q4.2)
+```sql
+SELECT 
+    attempt_id, user_id, ip_address, latency_ms, attempted_at,
+    LAG(attempted_at, 1) OVER (PARTITION BY ip_address ORDER BY attempted_at) AS prev_attempt_time,
+    TIMESTAMPDIFF(
+        MICROSECOND,
+        LAG(attempted_at, 1) OVER (PARTITION BY ip_address ORDER BY attempted_at),
+        attempted_at
+    ) AS delta_microseconds
+FROM purchase_attempts
+WHERE drop_id = 1
+ORDER BY ip_address, attempted_at ASC;
+```
+*Viva Defense*: If `delta_microseconds` is less than 50,000 $\mu\text{s}$ (50 milliseconds), no human could physically have clicked the button that quickly; this mathematically flags automated bot scripts in the database.
+
+---
+
+## 4. Examiner Viva Q&A (Component 7)
+
+**Q1: What is the difference between `RANK()`, `DENSE_RANK()`, and `ROW_NUMBER()`?**
+> *Defense*: 
+> - `ROW_NUMBER()` assigns a unique, sequential integer to every row regardless of ties (e.g. 1, 2, 3, 4).
+> - `RANK()` assigns the same rank to ties, but skips subsequent rank numbers (e.g. 1, 2, 2, 4).
+> - `DENSE_RANK()` assigns the same rank to ties without skipping subsequent numbers (e.g. 1, 2, 2, 3).
+> In FlashDrop, we use `DENSE_RANK()` for loyalty tiers so users with equal qualification points achieve the same reward tier without artificially jumping tier numbers.
+
+**Q2: How does MySQL 8 execute a Recursive CTE under the hood?**
+> *Defense*: MySQL executes the Anchor member query first and writes its result set into an internal temporary work table. It then repeatedly evaluates the Recursive member, joining the work table from the previous iteration until the recursive member returns an empty set. MySQL guards against runaway recursion using the system variable `cte_max_recursion_depth` (default 1000).
+
+**Q3: Why use the `->>` operator instead of `JSON_EXTRACT()` for JSON columns?**
+> *Defense*: `JSON_EXTRACT()` returns the value surrounded by JSON quotes (e.g. `"US 10.5"`). The `->>` operator is shorthand for `JSON_UNQUOTE(JSON_EXTRACT())`, which automatically unquotes the text and returns a clean SQL scalar string (`US 10.5`), simplifying `WHERE` clauses and indexing.
