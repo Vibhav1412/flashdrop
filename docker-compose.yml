@@ -49,3 +49,4 @@ volumes:
     name: flashdrop_mysql_data
   redis_data:
     name: flashdrop_redis_data
+
