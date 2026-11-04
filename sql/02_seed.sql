@@ -37,13 +37,26 @@ SET FOREIGN_KEY_CHECKS = 1;
 START TRANSACTION;
 
 -- =====================================================================
--- 1. BASE STATIC SEEDS (Roles & Loyalty Tiers)
+-- 1. BASE STATIC SEEDS (Roles, Admin User & Loyalty Tiers)
 -- =====================================================================
 
 INSERT INTO roles (role_id, role_name, description) VALUES
 (1, 'admin', 'System administrator with unrestricted database & operational access'),
 (2, 'customer', 'Storefront buyer with limited privileges enforced at DB level'),
-(3, 'auditor', 'Read-only financial and compliance compliance reporting role');
+(3, 'auditor', 'Read-only financial and compliance reporting role');
+
+-- Insert Administrator Account (user_id = 1) immediately so child tables can reference it
+INSERT INTO users (user_id, role_id, email, password_hash, first_name, last_name, phone, status) VALUES
+(1, 1, 'admin@flashdrop.com', '$2b$12$e8x5aNkJqj6h8K.7aVlXmOD9dKz6Dq1mUj7VqV.E4s8H2y3J9f1K.', 'Vib', 'Admin', '+15550000001', 'active');
+
+INSERT INTO addresses (user_id, address_line1, city, state, postal_code, country, is_default) VALUES
+(1, '100 Innovation Way', 'Bengaluru', 'Karnataka', '560085', 'India', TRUE);
+
+INSERT INTO wallets (wallet_id, user_id, balance, currency) VALUES
+(1, 1, 10000.00, 'USD');
+
+INSERT INTO wallet_ledger (wallet_id, entry_type, amount, balance_after, reference_type, reference_id, description) VALUES
+(1, 'CREDIT', 10000.00, 10000.00, 'deposit', 'ADMIN-INITIAL-001', 'Admin master funding ledger entry');
 
 INSERT INTO loyalty_tiers (tier_id, tier_name, min_spend, discount_percentage, early_access_minutes) VALUES
 (1, 'Bronze',    0.00,    0.00,  0),
@@ -88,7 +101,7 @@ INSERT INTO products (product_id, category_id, sku, title, description, base_pri
 (2, 11, 'FD-SNK-002', 'Hyperion Jordan 1 Low Travis Edition', 'Reverse swoosh detailing with premium earth-tone mocha nubuck and woven tongue label.', 190.00,
  '{"size": "US 9.0", "colorway": "Mocha/Sail/Black", "edition": "Collaborator Drop", "weight_grams": 420, "release_year": 2026}', TRUE),
 
-(3, 12, 'FD-SNK-003', 'Vortex Dunk Low Panda Prime', 'Timeless monochromatic monochrome black-and-white low-top icon built for everyday wear.', 140.00,
+(3, 12, 'FD-SNK-003', 'Vortex Dunk Low Panda Prime', 'Timeless monochromatic black-and-white low-top icon built for everyday wear.', 140.00,
  '{"size": "US 11.0", "colorway": "White/Black", "edition": "Core Drop", "weight_grams": 400, "release_year": 2026}', TRUE),
 
 (4, 5, 'FD-SNK-004', 'Quantum UltraBoost Neon Drift', 'Responsive in-memory foam midsole with engineered primeknit upper in vibrant cyber-neon accents.', 180.00,
@@ -112,7 +125,7 @@ INSERT INTO products (product_id, category_id, sku, title, description, base_pri
 (10, 11, 'FD-SNK-006', 'CyberDunk High Metallic Platinum', 'Mirrored chrome overlays with carbon fiber heel cup and ice-blue translucent outsole.', 280.00,
  '{"size": "US 10.0", "colorway": "Metallic Platinum/Ice Blue", "edition": "Flash Exclusive", "weight_grams": 470, "release_year": 2026}', TRUE);
 
--- Price History records
+-- Price History records (Now valid because user_id = 1 exists)
 INSERT INTO price_history (product_id, old_price, new_price, changed_by_user_id, changed_at) VALUES
 (1, 200.00, 220.00, 1, DATE_SUB(NOW(), INTERVAL 30 DAY)),
 (2, 175.00, 190.00, 1, DATE_SUB(NOW(), INTERVAL 20 DAY)),
@@ -171,35 +184,14 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS sp_seed_bulk_data$$
 CREATE PROCEDURE sp_seed_bulk_data()
 BEGIN
-    DECLARE i INT DEFAULT 1;
-    DECLARE v_user_id BIGINT UNSIGNED;
-    DECLARE v_wallet_id BIGINT UNSIGNED;
-    DECLARE v_order_id BIGINT UNSIGNED;
+    DECLARE i INT DEFAULT 2;
     DECLARE v_order_num VARCHAR(32);
-    DECLARE v_drop_id BIGINT UNSIGNED;
-    DECLARE v_price DECIMAL(10,2);
     DECLARE v_status VARCHAR(32);
     
     -- bcrypt hash for password "Password123!"
     DECLARE v_pass_hash VARCHAR(255) DEFAULT '$2b$12$e8x5aNkJqj6h8K.7aVlXmOD9dKz6Dq1mUj7VqV.E4s8H2y3J9f1K.';
 
-    -- 1. Insert Administrator Account (user_id = 1)
-    INSERT INTO users (user_id, role_id, email, password_hash, first_name, last_name, phone, status)
-    VALUES (1, 1, 'admin@flashdrop.com', v_pass_hash, 'Vib', 'Admin', '+15550000001', 'active')
-    ON DUPLICATE KEY UPDATE user_id = 1;
-
-    INSERT INTO addresses (user_id, address_line1, city, state, postal_code, country, is_default)
-    VALUES (1, '100 Innovation Way', 'Bengaluru', 'Karnataka', '560085', 'India', TRUE);
-
-    INSERT INTO wallets (wallet_id, user_id, balance, currency)
-    VALUES (1, 1, 10000.00, 'USD')
-    ON DUPLICATE KEY UPDATE balance = 10000.00;
-
-    INSERT INTO wallet_ledger (wallet_id, entry_type, amount, balance_after, reference_type, reference_id, description)
-    VALUES (1, 'CREDIT', 10000.00, 10000.00, 'deposit', 'ADMIN-INITIAL-001', 'Admin master funding ledger entry');
-
-    -- 2. Loop to generate 1,000 Customer Accounts, Wallets & Balanced Ledgers
-    SET i = 2;
+    -- Loop to generate Users 2 through 1000, Wallets & Balanced Ledgers
     WHILE i <= 1000 DO
         -- Set 3% of users as suspended (for fraud / security tests)
         IF i % 33 = 0 THEN
@@ -270,7 +262,7 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- 3. Generate Multi-Level Viral Referral Tree (User 2 referred 3, 3 referred 4, etc.)
+    -- 2. Generate Multi-Level Viral Referral Tree (User 2 referred 3, 3 referred 4, etc.)
     SET i = 2;
     WHILE i <= 400 DO
         INSERT INTO referrals (referrer_id, referee_id, referral_code, status, reward_amount)
@@ -284,7 +276,7 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- 4. Seed 175 Completed Orders for Concluded Drops (Drop 2 & Drop 3)
+    -- 3. Seed 150 Completed Orders for Concluded Drops (Drop 2 & Drop 3)
     SET i = 1;
     WHILE i <= 150 DO
         SET v_order_num = CONCAT('ORD-DROP2-', LPAD(i, 5, '0'));
@@ -329,7 +321,7 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- 5. Seed Concurrency Telemetry Logs (5,000+ purchase attempts for Drop 1)
+    -- 4. Seed Concurrency Telemetry Logs (5,000+ purchase attempts for Drop 1)
     SET i = 1;
     WHILE i <= 5000 DO
         INSERT INTO purchase_attempts (drop_id, user_id, ip_address, user_agent, status, latency_ms, attempted_at)
@@ -368,7 +360,7 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- 6. Seed Lottery Entries (Fair waiting room ballots)
+    -- 5. Seed Lottery Entries (Fair waiting room ballots)
     SET i = 1;
     WHILE i <= 500 DO
         INSERT INTO lottery_entries (drop_id, user_id, ticket_number, entry_time, is_winner)
@@ -382,7 +374,7 @@ BEGIN
         SET i = i + 1;
     END WHILE;
 
-    -- 7. Seed System Audit Logs
+    -- 6. Seed System Audit Logs
     INSERT INTO audit_log (table_name, action, record_id, changed_by_user_id, new_values_json, created_at)
     VALUES 
     ('drops', 'UPDATE', 1, 1, '{"status": "live", "action": "Manual launch by admin"}', NOW()),
