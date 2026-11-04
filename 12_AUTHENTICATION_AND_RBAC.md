@@ -93,3 +93,4 @@ UPDATE inventory SET available_quantity = 999 WHERE drop_id = 1;
 
 **Q2: What is the purpose of `SET DEFAULT ROLE` in MySQL 8?**
 > *Defense*: In MySQL 8, roles granted to a user are not automatically active upon login unless specified as default roles. `SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'%'` ensures that whenever the application pool connects with that user, the granted privileges are automatically active without requiring an explicit `SET ROLE` query.
+

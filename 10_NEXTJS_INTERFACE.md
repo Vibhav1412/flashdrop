@@ -45,3 +45,4 @@
 
 **Q2: What is the benefit of Next.js App Router for this database project?**
 > *Defense*: Next.js App Router provides Server Components and Route Handlers (`route.ts`). Server Components query the database directly on the server without exposing database credentials or API secrets to the client browser, reducing client-side bundle size and improving initial page load latency.
+

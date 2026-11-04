@@ -410,3 +410,4 @@ SELECT
 FROM products
 WHERE attributes_json->>'$.release_year' = '2026'
 ORDER BY base_price DESC;
+

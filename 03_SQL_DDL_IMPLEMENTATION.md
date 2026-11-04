@@ -103,3 +103,4 @@ VALUES (1, 100, 0, 0, -5);
 
 **Q2: Why use `RESTRICT` instead of `CASCADE` on category deletions and product deletions?**
 > *Defense*: `RESTRICT` prevents accidental data loss. If an administrator attempts to delete a parent category or a product with existing purchase history, the database aborts the transaction, preserving relational audit trails and historical reports.
+

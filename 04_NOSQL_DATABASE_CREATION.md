@@ -77,3 +77,4 @@ redis-cli TTL hold:101:user_501
 
 **Q2: What is the purpose of the `allkeys-lru` eviction policy?**
 > *Defense*: Under peak flash drop load, memory usage can rise. If Redis reaches its maxmemory threshold (256MB), `allkeys-lru` automatically evicts the least recently used product cache and session keys to free memory, preventing the server from rejecting critical inventory decrement and checkout hold operations.
+

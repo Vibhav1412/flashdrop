@@ -101,3 +101,4 @@ The relational schema is defined using relational algebra notation:
 
 **Q2: Did you denormalize any tables in this schema? If so, why?**
 > *Defense*: In `inventory`, we maintain `available_quantity` alongside `total_allocated`, `reserved_holds`, and `sold_quantity`, protected by a database `CHECK` constraint: `(available_quantity + reserved_holds + sold_quantity = total_allocated)`. This deliberate denormalization avoids costly `COUNT(*)` aggregations over high-volume `orders` and `order_items` tables during sub-millisecond stock validation queries.
+

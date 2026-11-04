@@ -48,3 +48,4 @@ Flash sales present an architectural paradox:
 
 **Q2: Why not build FlashDrop using ONLY Redis?**
 > *Defense*: Redis is primarily an in-memory data store. Storing financial ledgers, complex order hierarchies, user credentials, and historical analytical reports purely in Redis violates ACID durability and makes complex relational queries (joins, multi-level recursive category trees, aggregation with grouping) virtually impossible without reinventing a relational query engine in application code.
+

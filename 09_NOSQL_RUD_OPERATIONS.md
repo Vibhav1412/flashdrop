@@ -71,3 +71,4 @@ return {1, "HOLD_ACQUIRED"}
 > *Defense*: Redis uses a combination of passive and active expiration:
 > 1. *Passive Expiration*: When a client tries to access a key (e.g. `GET hold:101:user`), Redis checks if its TTL has expired; if so, it deletes the key immediately and returns `nil`.
 > 2. *Active Expiration*: Periodically (10 times per second), Redis tests a random sample of keys with TTLs and purges expired keys in the background to reclaim memory.
+

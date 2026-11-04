@@ -59,3 +59,4 @@ Final Inventory Balance      -187 (Corrupted State)           0 (Perfect Conserv
 ### NoSQL & Redis
 - **Q: What is the time complexity of Redis sorted set operations?**
   *A*: Inserting a user into the waiting room (`ZADD`) has a time complexity of $O(\log N)$, where $N$ is the number of elements in the sorted set. Retrieving a user's exact waiting room position (`ZRANK`) is $O(\log N)$ or $O(1)$ in memory. This is vastly faster than a relational `SELECT COUNT(*) FROM waiting_room WHERE created_at < my_time`, which requires scanning thousands of rows on disk.
+

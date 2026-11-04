@@ -340,3 +340,26 @@ Get-Content sql\02_seed.sql -Raw | mysql -u root -p flashdrop
 # Run the complete query suite against MySQL 8
 Get-Content sql\09_queries.sql -Raw | mysql -u root -p flashdrop
 ```
+
+
+---
+
+## 7. Phase 4: Advanced Database Programming Suite
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 8: Advanced SQL Concepts (Procedures, Functions, Triggers, Views & Events - 6 Marks)
+- **Files**:
+  - `sql/03_views_indexes.sql`: 3 Secure/Analytical Views + 6 B-Tree Indexes (including Functional JSON Expression Index).
+  - `sql/04_functions.sql`: 3 Deterministic Functions (`fn_calculate_loyalty_discount`, `fn_is_user_suspended`, `fn_get_category_breadcrumb`).
+  - `sql/05_procedures.sql`: 3 Stored Procedures (`sp_place_order` with ACID rollback handling, `sp_deposit_wallet`, `sp_reconcile_drop_inventory`).
+  - `sql/06_triggers.sql`: 4 Database Triggers (Negative stock guard, auto-suspend bot trigger, order mutation audit, price change audit).
+  - `sql/07_events.sql`: Hourly Scheduled Event refreshing `daily_drop_summary`.
+
+### Verification Runbook:
+```powershell
+# Execute all programmable database objects against MySQL 8
+Get-Content sql\03_views_indexes.sql -Raw | mysql -u root -p flashdrop
+Get-Content sql\04_functions.sql -Raw | mysql -u root -p flashdrop
+Get-Content sql\05_procedures.sql -Raw | mysql -u root -p flashdrop
+Get-Content sql\06_triggers.sql -Raw | mysql -u root -p flashdrop
+Get-Content sql\07_events.sql -Raw | mysql -u root -p flashdrop
+```

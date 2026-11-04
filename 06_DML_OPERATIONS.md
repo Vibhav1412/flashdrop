@@ -80,3 +80,4 @@ LIMIT 5;
 
 **Q2: How did you ensure your seed data satisfies the database `CHECK` constraints?**
 > *Defense*: The seed script enforces mathematical consistency programmatically: in `inventory`, `available_quantity` is computed as `total_allocated - reserved_holds - sold_quantity`; in `orders`, `final_amount` strictly equals `total_amount - discount_amount`; and in `wallet_ledger`, all credit/debit adjustments correspond with positive amounts and non-negative resulting balances.
+

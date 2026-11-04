@@ -92,3 +92,4 @@ export const adminPool = mysql.createPool({
 
 **Q2: What happens if an API handler crashes midway through checkout?**
 > *Defense*: Because checkout is wrapped in MySQL stored procedure `sp_place_order` with an active transaction (`START TRANSACTION`), any uncommitted state is rolled back automatically by the MySQL server when the connection returns to the pool or drops.
+
