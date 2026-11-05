@@ -363,3 +363,28 @@ Get-Content sql\05_procedures.sql -Raw | mysql -u root -p flashdrop
 Get-Content sql\06_triggers.sql -Raw | mysql -u root -p flashdrop
 Get-Content sql\07_events.sql -Raw | mysql -u root -p flashdrop
 ```
+
+
+---
+
+## 8. Phase 5: Database-Enforced Role-Based Access Control (`sql/08_roles.sql`)
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 12: Authentication & Role-Based Access Control in Database (4 Marks)
+- **Roles Created**:
+  - `flashdrop_customer`: Least privilege. Read access to catalog views. Write mutations restricted exclusively to vetted stored procedures (`sp_place_order`, `sp_deposit_wallet`). Direct `UPDATE`/`DELETE` on `inventory`, `orders`, and `wallets` is denied.
+  - `flashdrop_admin`: Superuser role with full administrative privileges.
+- **Database Users**:
+  - `flashdrop_customer_user` (Password: `customer_secure_pass_123`)
+  - `flashdrop_admin_user` (Password: `admin_secure_pass_123`)
+
+### Verification Runbook:
+```powershell
+# 1. Install roles and grants into MySQL 8
+Get-Content sql\08_roles.sql -Raw | mysql -u root -p flashdrop
+
+# 2. Test legitimate customer read (Succeeds)
+mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; SELECT product_id, title FROM products LIMIT 2;"
+
+# 3. Test customer unauthorized write attempt (FAILS with Error 1142)
+mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; UPDATE inventory SET available_quantity = 9999 WHERE drop_id = 1;"
+```

@@ -5,92 +5,95 @@
 
 ## 1. Overview & Source Code Mapping
 - **Database Script**: `sql/08_roles.sql`
-- **Application Auth**: NextAuth.js / JWT session validation with `bcrypt` (cost factor 12).
-- **Core Requirement**: Minimum of **two distinct roles** (`flashdrop_admin`, `flashdrop_customer`) enforced **directly within the MySQL database engine**, not solely in application code.
+- **Application Auth**: Dual-Connection Pool Architecture in Next.js + `bcrypt` (12 salt rounds)
+- **Evaluation Requirement**: *"Authentication implementation (front end and Minimum two roles and role-based access control in database)"*
 
 ---
 
-## 2. Multi-Layer Security Architecture
+## 2. Multi-Tier Security Hierarchy
 
 ```text
-Layer 1: Frontend UI Guard      -> Hides Admin navigation links from customers
-Layer 2: API Route Middleware    -> Inspects signed JWT session claims
-Layer 3: DATABASE ROLES (Core)  -> MySQL Engine checks SQL privileges on every query!
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Client Browser (Next.js Frontend)                        │
+│    - Role claim stored in signed JWT cookie                 │
+│    - Hides administrative routes & panels from customers     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTP Request + Session Token
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. API Route Guard (Server Middleware)                      │
+│    - Decodes JWT & verifies role                            │
+│    - Routes request to the matching MySQL connection pool   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+               ┌───────────────┴───────────────┐
+               │                               │
+        Customer Pool                     Admin Pool
+   (flashdrop_customer_user)        (flashdrop_admin_user)
+               │                               │
+               ▼                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3. DATABASE ENGINE ACCESS CONTROL (Core Viva Defense)       │
+│    - Role 'flashdrop_customer':                              │
+│        * SELECT on catalog views & products                 │
+│        * EXECUTE on sp_place_order, sp_deposit_wallet       │
+│        * DENIED: Direct UPDATE/DELETE on inventory/orders   │
+│    - Role 'flashdrop_admin':                                 │
+│        * ALL PRIVILEGES ON flashdrop.*                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Database Role Definition & Least-Privilege Grants (`sql/08_roles.sql`)
+## 3. Database Privilege Specification
 
-```sql
--- 1. Create native MySQL 8 roles
-CREATE ROLE IF NOT EXISTS 'flashdrop_admin';
-CREATE ROLE IF NOT EXISTS 'flashdrop_customer';
-
--- 2. Grant permissions to flashdrop_customer
--- Customer can read catalog, views, and own addresses
-GRANT SELECT ON flashdrop.products TO 'flashdrop_customer';
-GRANT SELECT ON flashdrop.categories TO 'flashdrop_customer';
-GRANT SELECT ON flashdrop.drops TO 'flashdrop_customer';
-GRANT SELECT ON flashdrop.vw_live_drop_catalog TO 'flashdrop_customer';
-GRANT SELECT, INSERT, UPDATE ON flashdrop.addresses TO 'flashdrop_customer';
-
--- Customer CANNOT directly modify orders, inventory, or ledger!
--- Direct DML is revoked/denied:
--- REVOKE INSERT, UPDATE, DELETE ON flashdrop.inventory FROM 'flashdrop_customer';
--- REVOKE INSERT, UPDATE, DELETE ON flashdrop.orders FROM 'flashdrop_customer';
-
--- Customer can ONLY interact with inventory and orders through vetted stored procedures:
-GRANT EXECUTE ON PROCEDURE flashdrop.sp_place_order TO 'flashdrop_customer';
-GRANT EXECUTE ON PROCEDURE flashdrop.sp_deposit_wallet TO 'flashdrop_customer';
-GRANT EXECUTE ON FUNCTION flashdrop.fn_calculate_loyalty_discount TO 'flashdrop_customer';
-
--- 3. Grant permissions to flashdrop_admin
--- Admin has complete operational control
-GRANT ALL PRIVILEGES ON flashdrop.* TO 'flashdrop_admin';
-
--- 4. Create concrete database users and assign roles
-CREATE USER IF NOT EXISTS 'flashdrop_customer_user'@'%' IDENTIFIED BY 'customer_secure_pass_123';
-CREATE USER IF NOT EXISTS 'flashdrop_admin_user'@'%' IDENTIFIED BY 'admin_secure_pass_123';
-
-GRANT 'flashdrop_customer' TO 'flashdrop_customer_user'@'%';
-GRANT 'flashdrop_admin' TO 'flashdrop_admin_user'@'%';
-
--- Activate default roles upon login
-SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'%';
-SET DEFAULT ROLE 'flashdrop_admin' TO 'flashdrop_admin_user'@'%';
-
-FLUSH PRIVILEGES;
-```
+| Object Name | `flashdrop_customer` Permission | `flashdrop_admin` Permission | Security Justification |
+| :--- | :---: | :---: | :--- |
+| `products` | `SELECT` | `ALL PRIVILEGES` | Customers browse catalog; admins manage products. |
+| `categories` | `SELECT` | `ALL PRIVILEGES` | Read-only category taxonomy for buyers. |
+| `vw_live_drop_catalog` | `SELECT` | `ALL PRIVILEGES` | Masked storefront view concealing internal reserve buffers. |
+| `inventory` | **DENIED DIRECT WRITES** | `ALL PRIVILEGES` | Prevents customers from modifying stock counts via raw SQL injection. |
+| `orders` | **DENIED DIRECT WRITES** | `ALL PRIVILEGES` | Prevents unauthorized insertion or status mutations of orders. |
+| `wallets` | `SELECT` | `ALL PRIVILEGES` | Customers can view own balance, but cannot directly update balance. |
+| `wallet_ledger` | `SELECT` | `ALL PRIVILEGES` | Append-only ledger managed strictly by transactional procedures. |
+| `sp_place_order` | `EXECUTE` | `EXECUTE` | **Only approved path** for inventory & order state changes. |
+| `sp_deposit_wallet` | `EXECUTE` | `EXECUTE` | Safe wallet funding via double-entry ledger. |
+| `audit_log` | **NO ACCESS** | `ALL PRIVILEGES` | Immutable security log inaccessible to customers. |
 
 ---
 
-## 4. Live Demonstration of Database-Enforced Security (Viva Defense)
+## 4. Live Viva Demonstration Script (Proving Database-Enforced RBAC)
 
-To demonstrate to the examiner that security is truly enforced in the database:
+When the examiner asks: *"Show me that role-based access control is actually enforced inside MySQL, and not just in JavaScript"*, run this live terminal demonstration:
 
-### Test Step 1: Execute legitimate procedure as customer (Succeeds)
-```sql
--- Connect as customer user
--- mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 flashdrop
-CALL sp_deposit_wallet(42, 100.00, 'deposit_txn_001');
--- Result: Query OK, 1 row affected (Succeeds!)
+### Step 1: Connect as Customer User (Legitimate Action)
+```bash
+mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; SELECT product_id, sku, title, base_price FROM products LIMIT 3;"
 ```
+*Result*: Returns the product table cleanly!
 
-### Test Step 2: Customer attempts direct unauthorized write to inventory (Fails!)
-```sql
--- Attempt to directly modify stock as customer
-UPDATE inventory SET available_quantity = 999 WHERE drop_id = 1;
--- Result: ERROR 1142 (42000): UPDATE command denied to user 'flashdrop_customer_user'@'localhost' for table 'inventory'
+### Step 2: Customer executes approved stored procedure
+```bash
+mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; CALL sp_deposit_wallet(2, 50.00, 'TEST-DEP-001');"
 ```
+*Result*: `Query OK, 1 row affected` (Succeeds via procedure grant!).
+
+### Step 3: Customer attempts direct unauthorized modification (DENIED!)
+```bash
+mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; UPDATE inventory SET available_quantity = 9999 WHERE drop_id = 1;"
+```
+*Result*:
+```text
+ERROR 1142 (42000) at line 1: UPDATE command denied to user 'flashdrop_customer_user'@'localhost' for table 'inventory'
+```
+The MySQL storage engine physically halts the query with Error 1142. **Security is impenetrable even if the web application is compromised!**
 
 ---
 
 ## 5. Examiner Viva Q&A (Component 12)
 
-**Q1: Why is application-level role checking (e.g. in Next.js middleware) insufficient on its own?**
-> *Defense*: Application-level checks protect against naive browser requests, but if an attacker exploits a SQL injection vulnerability, a server-side request forgery (SSRF) flaw, or an API logic bug, they execute SQL queries with whatever privileges the database connection has. If the database connection is running as `root` or a superuser, the attacker can wipe tables or forge balances. Enforcing roles at the MySQL engine level ensures that even in the event of an application compromise, the customer connection cannot execute `UPDATE` or `DELETE` on critical tables.
+**Q1: Why is application-level RBAC insufficient on its own for an enterprise database project?**
+> *Defense*: If access control exists only in the application layer (e.g., `if (session.role === 'admin')`), any SQL injection vulnerability, compromised API endpoint, or leaked database credential gives the attacker unrestricted access to modify balances, wipe inventory, or steal user records. Enforcing RBAC at the MySQL engine layer via native roles (`flashdrop_customer` vs `flashdrop_admin`) guarantees least-privilege isolation at the hardware and storage layer.
 
 **Q2: What is the purpose of `SET DEFAULT ROLE` in MySQL 8?**
-> *Defense*: In MySQL 8, roles granted to a user are not automatically active upon login unless specified as default roles. `SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'%'` ensures that whenever the application pool connects with that user, the granted privileges are automatically active without requiring an explicit `SET ROLE` query.
-
+> *Defense*: In MySQL 8, roles granted to a user account are not automatically active upon connection handshake unless configured as default roles. `SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'localhost'` ensures that whenever the Next.js connection pool opens a connection, the role privileges are immediately active without needing a separate `SET ROLE` query.
