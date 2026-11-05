@@ -406,3 +406,24 @@ mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; U
 4. **Deadlock Reproduction (`ERROR 1213`)**:
    - Creates a cyclic lock dependency between `inventory` and `wallets`.
    - Forces InnoDB's background lock manager to detect the cycle in the Wait-For Graph and abort the transaction with the least work done.
+
+
+---
+
+## 10. Phase 7: Redis NoSQL Layer & Full RUD Implementation
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 9: NoSQL Feature & Full RUD (7 Marks)
+- **Engine**: Redis 7.2 (Alpine / In-Memory Key-Value & Data Structures)
+- **Key Modules Created**:
+  - `redis/lua/acquire_hold.lua`: Atomic Check-and-Decrement script for race-free 5-minute checkout holds with TTL.
+  - `redis/lua/release_hold.lua`: Atomic hold cancellation and stock restitution.
+  - `redis/crud_demo.ps1`: Interactive PowerShell / `redis-cli` verification suite proving full Create, Read, Update, Delete across Strings, Hashes, Sorted Sets, Sets, and Lua scripts.
+  - `redis/crud_demo.js`: Node.js / `ioredis` programmatic test runner.
+  - `redis/rebuild_stock_from_mysql.js`: Startup state hydration script syncing Redis from MySQL.
+  - `redis/key-design.md`: Complete namespace architecture and eviction policies.
+
+### Verification Runbook:
+```powershell
+# Execute the Redis 7 full RUD verification suite
+.\redis\crud_demo.ps1
+```

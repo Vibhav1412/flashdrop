@@ -4,71 +4,63 @@
 ---
 
 ## 1. Overview & Source Code Mapping
-- **NoSQL Engine**: Redis 7.2
-- **Scripts**: `redis/lua/acquire_hold.lua`, `redis/lua/release_hold.lua`, `redis/crud_demo.js`
-- **Scope**: Complete demonstration of Create, Read, Update, and Delete (RUD/CRUD) across diverse Redis data types: Strings, Hashes, Sets, Sorted Sets, and Atomic Lua Scripts.
+- **NoSQL Engine**: Redis 7.2 (In-Memory Data Structures)
+- **Primary Scripts**:
+  - `redis/lua/acquire_hold.lua`: Atomic Check-and-Decrement Inventory Hold script.
+  - `redis/lua/release_hold.lua`: Atomic Hold Cancellation and stock restitution script.
+  - `redis/crud_demo.ps1`: Direct CLI runbook demonstrating full RUD lifecycle.
+  - `redis/crud_demo.js`: Programmatic demonstration via Node.js / `ioredis`.
+  - `redis/rebuild_stock_from_mysql.js`: Startup state hydration script.
+- **Evaluation Target**: Demonstrates Create, Read, Update, and Delete across diverse data structures (Strings, Hashes, Sets, Sorted Sets, and Lua scripts).
 
 ---
 
-## 2. Complete RUD / CRUD Implementation Matrix
+## 2. Complete RUD Operations Matrix
 
-| Operation | Entity / Key Pattern | Redis Command / Script | Purpose in FlashDrop |
+| Operation Category | Data Structure | Redis Command / Script | Concrete FlashDrop Business Usage |
 | :--- | :--- | :--- | :--- |
-| **CREATE** | `drop:{id}:stock` | `SET drop:101:stock 100` | Initializes available stock when a drop goes live. |
-| **CREATE** | `session:{token}` | `HSET session:abc userId 42 role "customer"` | Stores logged-in user session with metadata. |
-| **CREATE** | `drop:{id}:queue` | `ZADD drop:101:queue 1730700000 "user_42"` | Places user into the waiting room sorted by timestamp. |
-| **READ** | `drop:{id}:stock` | `GET drop:101:stock` | Reads real-time remaining inventory counter. |
-| **READ** | `drop:{id}:queue` | `ZRANK drop:101:queue "user_42"` | Returns exact real-time position in queue (0-indexed). |
-| **READ** | `cache:product:{id}` | `HGETALL cache:product:501` | Reads cached product catalog details. |
-| **UPDATE** | `drop:{id}:stock` + `hold` | `EVAL acquire_hold.lua ...` | **Atomic Lua Script**: Decrements stock + Creates 5-minute hold. |
-| **UPDATE** | `drop:{id}:queue` | `ZINCRBY drop:101:queue -100 "vip_user"` | Priority boost: moves VIP/loyalty users ahead in queue. |
-| **UPDATE** | `session:{token}` | `EXPIRE session:abc 3600` | Extends session validity upon user activity. |
-| **DELETE** | `hold:{drop}:{user}` | `DEL hold:101:user_42` | Deletes temporary hold upon confirmed checkout. |
-| **DELETE** | `drop:{id}:queue` | `ZREM drop:101:queue "user_42"` | Removes user from waiting room once granted checkout entry. |
-| **DELETE** | `cache:product:{id}` | `DEL cache:product:501` | Cache Invalidation triggered upon MySQL product price change. |
+| **CREATE** | String | `SET drop:1:stock 100` | Initializes live inventory counter for Drop 1. |
+| **CREATE** | Hash | `HSET session:token_abc userId 2 role "customer"` | Serializes user session metadata with TTL. |
+| **CREATE** | Sorted Set (ZSET) | `ZADD drop:1:queue <timestamp> "user_2"` | Enqueues buyers in millisecond-accurate waiting room. |
+| **CREATE** | Set | `SADD drop:1:lottery "ballot_2"` | Adds user tickets to fair anti-bot lottery pool. |
+| **READ** | String | `GET drop:1:stock` | Sub-millisecond read of live remaining stock. |
+| **READ** | Hash | `HGETALL session:token_abc` | Retrieves logged-in user profile without querying MySQL. |
+| **READ** | Sorted Set (ZSET) | `ZRANK drop:1:queue "user_2"` | Instant $O(1)$ memory lookup of buyer's queue rank. |
+| **READ** | Set | `SRANDMEMBER drop:1:lottery 2` | Unbiased random winner selection from lottery pool. |
+| **UPDATE** | String + Hold (Lua) | `EVAL acquire_hold.lua ...` | **Atomic Check-and-Decrement**: Decrements stock + sets 5-minute hold with TTL. |
+| **UPDATE** | Sorted Set (ZSET) | `ZINCRBY drop:1:queue -1000000 "user_4"` | VIP priority score update (jumps ahead in waitlist). |
+| **UPDATE** | Hash / TTL | `EXPIRE session:token_abc 7200` | Refreshes session TTL upon user interaction. |
+| **DELETE** | String | `DEL hold:1:user_2` | Deletes temporary checkout hold upon order completion. |
+| **DELETE** | Sorted Set (ZSET) | `ZREM drop:1:queue "user_2"` | Evicts buyer from waiting room once entering checkout. |
+| **DELETE** | Hash | `DEL cache:product:1` | Cache invalidation triggered when MySQL product price updates. |
 
 ---
 
-## 3. Atomic Lua Script (`redis/lua/acquire_hold.lua`)
+## 3. High-Yield Viva Defense: Atomic Lua Scripts
 
-Standard Redis commands cannot check stock and reserve a hold simultaneously without a race window. FlashDrop solves this using an atomic Lua script:
-
-```lua
--- KEYS[1]: drop:{id}:stock
--- KEYS[2]: hold:{drop}:{user}
--- ARGV[1]: hold_ttl_seconds (e.g., 300)
--- ARGV[2]: user_id
-
-local current_stock = tonumber(redis.call('GET', KEYS[1]))
-
--- 1. Check if stock exists and is greater than zero
-if not current_stock or current_stock <= 0 then
-    return {0, "OUT_OF_STOCK"}
-end
-
--- 2. Check if user already holds an active reservation
-if redis.call('EXISTS', KEYS[2]) == 1 then
-    return {0, "ALREADY_HOLDING"}
-end
-
--- 3. Atomically decrement stock
-redis.call('DECR', KEYS[1])
-
--- 4. Create 5-minute hold with TTL
-redis.call('SETEX', KEYS[2], ARGV[1], "RESERVED")
-
-return {1, "HOLD_ACQUIRED"}
+### Why is `acquire_hold.lua` needed?
+If an application executes:
+```javascript
+const stock = await redis.get("drop:1:stock");
+if (stock > 0) {
+    await redis.decr("drop:1:stock");
+    await redis.setex("hold:1:user", 300, "RESERVED");
+}
 ```
+Under concurrent flash drop load (e.g. 5,000 users hitting the endpoint simultaneously when `stock = 1`), dozens of requests read `stock = 1` before any single `decr` completes. Multiple users receive holds, and the counter drops below zero (overselling).
+
+**The Lua Solution**:
+Redis executes Lua scripts **atomically on its single-threaded event loop**. The server guarantees that no other Redis command or script can run while `acquire_hold.lua` is executing. The stock check, decrement, and hold key creation occur as a single indivisible operation.
 
 ---
 
 ## 4. Examiner Viva Q&A (Component 9)
 
-**Q1: Why is an atomic Lua script necessary instead of executing `GET` followed by `DECR` and `SETEX` in Node.js?**
-> *Defense*: If executed as separate commands from Node.js, a race condition occurs between the `GET` and `DECR` commands. If stock is 1 and two users execute `GET` simultaneously, both see stock = 1 and both execute `DECR`, resulting in an oversell (stock becomes -1). Redis executes Lua scripts atomically; the server guarantees no other command or script can run while the script is evaluating.
+**Q1: What is the time complexity of Redis Sorted Set operations like `ZADD` and `ZRANK`?**
+> *Defense*: Redis Sorted Sets are implemented using a dual data structure: a Skip List combined with a Hash Table. `ZADD` inserts an element in $O(\log N)$ time, and `ZRANK` retrieves an element's 0-indexed position in $O(\log N)$ time. This allows FlashDrop to manage a waiting room of 100,000 queued users in memory with sub-millisecond response times.
 
-**Q2: How does Redis handle key expiration under the hood?**
-> *Defense*: Redis uses a combination of passive and active expiration:
-> 1. *Passive Expiration*: When a client tries to access a key (e.g. `GET hold:101:user`), Redis checks if its TTL has expired; if so, it deletes the key immediately and returns `nil`.
-> 2. *Active Expiration*: Periodically (10 times per second), Redis tests a random sample of keys with TTLs and purges expired keys in the background to reclaim memory.
+**Q2: What happens if Redis crashes? Does FlashDrop lose all inventory records?**
+> *Defense*: No. In FlashDrop's polyglot architecture, **MySQL is the durable source of truth**. Redis holds only ephemeral live counters and 5-minute checkout holds. In addition, Redis is configured with Append-Only File (`AOF`) persistence (`appendfsync everysec`). On server reboot, `redis/rebuild_stock_from_mysql.js` recalculates `available_quantity` from MySQL and re-hydrates Redis before incoming checkout traffic is accepted.
 
+**Q3: How does FlashDrop implement the Cache-Aside pattern with Redis?**
+> *Defense*: When a client requests a product page, the application first checks Redis (`GET cache:product:{id}`). On a cache hit, the response returns in sub-millisecond time. On a cache miss, the backend reads MySQL, stores the result in Redis with a 1-hour TTL (`SETEX cache:product:{id} 3600 ...`), and returns it. If an admin updates the product in MySQL, our trigger or API handler executes `DEL cache:product:{id}`, ensuring subsequent reads fetch the fresh data.

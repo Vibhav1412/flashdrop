@@ -1,0 +1,23 @@
+{
+  "name": "flashdrop",
+  "version": "1.0.0",
+  "description": "> **High-Concurrency Limited-Drop Commerce Engine with Polyglot Persistence** > Built with MySQL 8 (Relational Core), Redis 7 (In-Memory Atomic Layer), and Next.js (Full-Stack Engine).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vibhav1412/flashdrop.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Vibhav1412/flashdrop/issues"
+  },
+  "homepage": "https://github.com/Vibhav1412/flashdrop#readme"
+}
