@@ -388,3 +388,21 @@ mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; S
 # 3. Test customer unauthorized write attempt (FAILS with Error 1142)
 mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; UPDATE inventory SET available_quantity = 9999 WHERE drop_id = 1;"
 ```
+
+
+---
+
+## 9. Phase 6: Transactions Lab, Isolation Anomalies & Deadlock Simulation (`sql/10_isolation_demos.sql`)
+- **Status**: Completed & Committed
+- **Scope**: Rigorous demonstration of ACID isolation levels, Dirty Read, Non-Repeatable Read, Lost Update, Deadlock cycle detection, and Lock resolution mechanisms.
+
+### Laboratory Anomaly Matrix:
+1. **Dirty Read (READ UNCOMMITTED)**: Demonstrates $T_2$ reading uncommitted stock changes before $T_1$ executes `ROLLBACK`.
+2. **Non-Repeatable Read (READ COMMITTED)**: Demonstrates price change visible to $T_1$ mid-transaction, and how InnoDB's default `REPEATABLE READ` snapshot isolation prevents it via MVCC Undo Logs.
+3. **Lost Update**: Explains the root vulnerability of naive high-concurrency commerce, and demonstrates the three relational remediation strategies:
+   - Atomic in-place decrements (`UPDATE ... SET stock = stock - 1 WHERE stock > 0`).
+   - Pessimistic Locking (`SELECT ... FOR UPDATE`).
+   - Optimistic Concurrency Control (`WHERE version = ?`).
+4. **Deadlock Reproduction (`ERROR 1213`)**:
+   - Creates a cyclic lock dependency between `inventory` and `wallets`.
+   - Forces InnoDB's background lock manager to detect the cycle in the Wait-For Graph and abort the transaction with the least work done.
