@@ -16,6 +16,9 @@ CREATE ROLE IF NOT EXISTS 'flashdrop_customer';
 
 -- =====================================================================
 -- 2. LEAST-PRIVILEGE GRANTS: flashdrop_customer
+-- (MySQL follows a default-deny whitelist model. By only granting SELECT
+-- and EXECUTE, direct table writes to inventory, orders, and wallets
+-- are automatically blocked with Error 1142!)
 -- =====================================================================
 
 -- Catalog & Storefront View Grants (Read-Only)
@@ -41,14 +44,6 @@ GRANT EXECUTE ON FUNCTION flashdrop.fn_calculate_loyalty_discount TO 'flashdrop_
 GRANT EXECUTE ON FUNCTION flashdrop.fn_is_user_suspended TO 'flashdrop_customer';
 GRANT EXECUTE ON FUNCTION flashdrop.fn_get_category_breadcrumb TO 'flashdrop_customer';
 
--- Explicit Revocation / Deny:
--- Customer cannot directly touch inventory, orders, payments, audit_log, or fraud_flags
-REVOKE INSERT, UPDATE, DELETE ON flashdrop.inventory FROM 'flashdrop_customer';
-REVOKE INSERT, UPDATE, DELETE ON flashdrop.orders FROM 'flashdrop_customer';
-REVOKE INSERT, UPDATE, DELETE ON flashdrop.payments FROM 'flashdrop_customer';
-REVOKE INSERT, UPDATE, DELETE ON flashdrop.audit_log FROM 'flashdrop_customer';
-REVOKE INSERT, UPDATE, DELETE ON flashdrop.fraud_flags FROM 'flashdrop_customer';
-
 -- =====================================================================
 -- 3. ADMINISTRATIVE GRANTS: flashdrop_admin
 -- =====================================================================
@@ -69,18 +64,12 @@ CREATE USER IF NOT EXISTS 'flashdrop_admin_user'@'localhost' IDENTIFIED BY 'admi
 CREATE USER IF NOT EXISTS 'flashdrop_admin_user'@'%' IDENTIFIED BY 'admin_secure_pass_123';
 
 -- Assign Roles to Users
-GRANT 'flashdrop_customer' TO 'flashdrop_customer_user'@'localhost';
-GRANT 'flashdrop_customer' TO 'flashdrop_customer_user'@'%';
-
-GRANT 'flashdrop_admin' TO 'flashdrop_admin_user'@'localhost';
-GRANT 'flashdrop_admin' TO 'flashdrop_admin_user'@'%';
+GRANT 'flashdrop_customer' TO 'flashdrop_customer_user'@'localhost', 'flashdrop_customer_user'@'%';
+GRANT 'flashdrop_admin' TO 'flashdrop_admin_user'@'localhost', 'flashdrop_admin_user'@'%';
 
 -- Activate Default Roles upon connection handshake
-SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'localhost';
-SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'%';
-
-SET DEFAULT ROLE 'flashdrop_admin' TO 'flashdrop_admin_user'@'localhost';
-SET DEFAULT ROLE 'flashdrop_admin' TO 'flashdrop_admin_user'@'%';
+SET DEFAULT ROLE 'flashdrop_customer' TO 'flashdrop_customer_user'@'localhost', 'flashdrop_customer_user'@'%';
+SET DEFAULT ROLE 'flashdrop_admin' TO 'flashdrop_admin_user'@'localhost', 'flashdrop_admin_user'@'%';
 
 FLUSH PRIVILEGES;
 
