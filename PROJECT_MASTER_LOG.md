@@ -427,3 +427,36 @@ mysql -u flashdrop_customer_user -pcustomer_secure_pass_123 -e "USE flashdrop; U
 # Execute the Redis 7 full RUD verification suite
 .\redis\crud_demo.ps1
 ```
+
+
+---
+
+## 11. Phase 8: Next.js Full-Stack Application & Dual Connection Pool
+- **Status**: Completed & Committed
+- **Target Rubric**: Component 10 (Next.js Interface - 3 Marks) + Component 11 (Backend/API Integration - 2 Marks)
+- **Path**: `app/`
+- **Architecture Highlights**:
+  - **Dual MySQL Connection Pools (`app/src/lib/db.ts`)**: `customerPool` (restricted to `flashdrop_customer_user`) vs `adminPool` (elevated `flashdrop_admin_user`).
+  - **Redis Client & Lua Integration (`app/src/lib/redis.ts`)**: Atomic hold acquisition, TTL inspection, queue ranking.
+  - **API Route Handlers**:
+    - `GET /api/drops`: Catalog view with real-time Redis stock counters.
+    - `POST /api/drops/[id]/hold`: Atomic Lua check-and-decrement.
+    - `POST /api/checkout`: Stored procedure `sp_place_order` execution.
+    - `GET /api/wallet`: Prepaid balance and double-entry ledger query.
+    - `GET /api/admin/metrics`: Executive summary view from `adminPool`.
+  - **Interactive Next.js Pages**:
+    - `/`: Live synchronized drop countdown clock and drop grid.
+    - `/drops/[id]`: Product JSON attributes viewer, live stock bar, and hold claim button.
+    - `/checkout/[id]`: 5-minute visual hold countdown clock and wallet checkout.
+    - `/wallet`: Prepaid balance and double-entry credit/debit audit table.
+    - `/referrals`: Recursive viral referral tree visualizer.
+    - `/admin/dashboard`: Executive sales metrics and auto-suspended bot fraud flags.
+    - `/admin/chaos`: Interactive load simulation trigger with side-by-side comparative analytics.
+
+### Verification Runbook:
+```powershell
+cd app
+npm install
+npm run dev
+# Open http://localhost:3000 in your browser!
+```

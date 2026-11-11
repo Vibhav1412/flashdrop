@@ -38,50 +38,24 @@ To enforce database-level security and prevent application-level privilege escal
                       +---------------------------------------------+
 ```
 
-### Connection Pool Configuration:
-```typescript
-import mysql from 'mysql2/promise';
-
-// Customer Pool (Least Privilege: Catalog reads, Stored Procedure Execution)
-export const customerPool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: Number(process.env.DB_PORT) || 3306,
-  database: process.env.DB_NAME || 'flashdrop',
-  user: process.env.DB_CUSTOMER_USER || 'flashdrop_customer_user',
-  password: process.env.DB_CUSTOMER_PASSWORD,
-  waitForConnections: true,
-  connectionLimit: 50,
-  queueLimit: 0,
-});
-
-// Admin Pool (Full Administration, Drops, Telemetry)
-export const adminPool = mysql.createPool({
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: Number(process.env.DB_PORT) || 3306,
-  database: process.env.DB_NAME || 'flashdrop',
-  user: process.env.DB_ADMIN_USER || 'flashdrop_admin_user',
-  password: process.env.DB_ADMIN_PASSWORD,
-  waitForConnections: true,
-  connectionLimit: 15,
-  queueLimit: 0,
-});
-```
-
 ---
 
-## 3. Integration Handlers & Endpoints
+## 3. Integration Endpoints Implemented
 
-1. **`POST /api/drops/[id]/hold`**:
-   - Executes `acquire_hold.lua` via `ioredis`.
-   - On success: Returns hold token and 300s TTL.
-   - On failure: Returns `OUT_OF_STOCK` or `RATE_LIMITED`.
-2. **`POST /api/orders/checkout`**:
-   - Acquires a connection from `customerPool`.
-   - Calls stored procedure `CALL sp_place_order(...)`.
-   - Invokes Redis `DEL hold:{drop}:{user}` to release hold state upon commit.
-3. **`GET /api/admin/metrics`**:
-   - Acquires connection from `adminPool`.
-   - Executes analytical view queries on `vw_admin_sales_summary`.
+1. **`GET /api/drops`**:
+   - Queries `vw_live_drop_catalog` via `customerPool`.
+   - Enriches each record with live Redis inventory counts from `drop:{id}:stock`.
+2. **`POST /api/drops/[id]/hold`**:
+   - Executes atomic Lua script `acquire_hold.lua` via `ioredis`.
+   - Returns 300-second reservation hold token.
+3. **`POST /api/checkout`**:
+   - Acquires connection from `customerPool`.
+   - Calls stored procedure `CALL sp_place_order(userId, dropId, paymentMethod, @order_id, @status_code, @status_msg)`.
+   - Deletes Redis hold on commit.
+4. **`GET /api/wallet`**:
+   - Queries `wallets` and `wallet_ledger` via `customerPool`.
+5. **`GET /api/admin/metrics`**:
+   - Acquires connection from elevated `adminPool` to query `vw_admin_sales_summary` and `fraud_flags`.
 
 ---
 
@@ -92,4 +66,3 @@ export const adminPool = mysql.createPool({
 
 **Q2: What happens if an API handler crashes midway through checkout?**
 > *Defense*: Because checkout is wrapped in MySQL stored procedure `sp_place_order` with an active transaction (`START TRANSACTION`), any uncommitted state is rolled back automatically by the MySQL server when the connection returns to the pool or drops.
-
