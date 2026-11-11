@@ -52,6 +52,25 @@ Performance Gain             Baseline (Disk I/O Bottleneck)   ${Math.round(resul
   fs.writeFileSync(path.join(__dirname, 'benchmark_results.json'), JSON.stringify({ resultA, resultB }, null, 2));
 
   console.log('✅ Results successfully saved to loadtest/benchmark_results.txt and .json!');
+
+  // Restore inventory state for continued app & test usage
+  const mysql = require('mysql2/promise');
+  const Redis = require('ioredis');
+  try {
+    const adminDb = await mysql.createConnection({
+      host: process.env.DB_HOST || '127.0.0.1',
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_ADMIN_USER || 'flashdrop_admin_user',
+      password: process.env.DB_ADMIN_PASSWORD || 'admin_secure_pass_123',
+      database: process.env.DB_NAME || 'flashdrop',
+    });
+    await adminDb.execute('UPDATE inventory SET total_allocated = 100, reserved_holds = 5, sold_quantity = 25, available_quantity = 70 WHERE drop_id = 1');
+    await adminDb.end();
+    const redis = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1', port: Number(process.env.REDIS_PORT) || 6379 });
+    await redis.set('drop:1:stock', 70);
+    redis.disconnect();
+    console.log('🔄 Drop 1 inventory automatically restored to seed state (70 available).');
+  } catch (_) {}
 }
 
 if (require.main === module) {

@@ -199,3 +199,4 @@ node test/hardening_suite.js
 
 #### Q20: What is the single biggest architectural takeaway from building FlashDrop?
 > **Answer**: That high-concurrency systems should never force a relational database to handle high-frequency ephemeral state. By offloading volatile contention locks to an atomic in-memory layer (Redis) and using the relational database (MySQL) strictly for what it excels at — immutable transactional accounting and relational integrity — you achieve both unlimited burst scalability and mathematical financial correctness.
+

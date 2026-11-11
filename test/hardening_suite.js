@@ -98,7 +98,8 @@ async function runHardeningSuite() {
     // TEST 3: ACID Rollback on Insufficient Wallet Balance
     // -----------------------------------------------------------------
     console.log('--- [TEST 3: ACID TRANSACTION ROLLBACK ON INSUFFICIENT FUNDS] ---');
-    // Ensure test user 500 has zero balance
+    // Ensure Drop 1 has available inventory and test user 500 has zero balance
+    await adminDb.execute('UPDATE inventory SET total_allocated = 100, reserved_holds = 0, sold_quantity = 50, available_quantity = 50 WHERE drop_id = 1');
     await adminDb.execute('UPDATE wallets SET balance = 0.00 WHERE user_id = 500');
     const [ordersBefore] = await adminDb.execute('SELECT COUNT(*) as cnt FROM orders WHERE user_id = 500');
     const ordersCountBefore = ordersBefore[0].cnt;
