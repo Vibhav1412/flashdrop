@@ -124,12 +124,20 @@ function CheckoutContent({ dropId }: { dropId: string }) {
           </div>
         </div>
 
-        <Link
-          href="/wallet"
-          className="w-full py-3.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs block transition"
-        >
-          View Updated Wallet & Ledger &rarr;
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <Link
+            href={`/receipt/${orderResult.orderId}`}
+            className="flex-1 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs block transition shadow-lg shadow-emerald-600/30"
+          >
+            📄 View Official Tax Invoice &rarr;
+          </Link>
+          <Link
+            href="/wallet"
+            className="flex-1 py-3.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs block transition"
+          >
+            View Wallet Ledger &rarr;
+          </Link>
+        </div>
       </div>
     );
   }
