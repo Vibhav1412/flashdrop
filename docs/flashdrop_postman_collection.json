@@ -1,0 +1,148 @@
+{
+  "info": {
+    "_postman_id": "flashdrop-api-v1",
+    "name": "FlashDrop Engine REST API",
+    "description": "Comprehensive Postman API Collection for testing FlashDrop endpoints: drops catalog, hold reservation, wallet ledger, checkout, and chaos mode.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Drops",
+      "item": [
+        {
+          "name": "List All Drops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drops",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "drops"]
+            }
+          }
+        },
+        {
+          "name": "Get Drop Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drops/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "drops", "1"]
+            }
+          }
+        },
+        {
+          "name": "Acquire Atomic Hold (Lua)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/drops/1/hold",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "drops", "1", "hold"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Checkout & Payments",
+      "item": [
+        {
+          "name": "Execute Stored Procedure Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 2,\n  \"dropId\": 1,\n  \"paymentMethod\": \"wallet\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Get User Wallet Balance & Ledger",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet?userId=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "wallet"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin & Concurrency Lab",
+      "item": [
+        {
+          "name": "Admin Telemetry & Fraud Flags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "metrics"]
+            }
+          }
+        },
+        {
+          "name": "Trigger Chaos Simulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"concurrentUsers\": 1000,\n  \"initialStock\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/chaos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "chaos"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ]
+}
