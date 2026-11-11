@@ -172,3 +172,4 @@ export default function DropDetailPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+

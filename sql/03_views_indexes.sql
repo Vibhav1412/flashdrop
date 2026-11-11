@@ -105,3 +105,4 @@ CREATE INDEX idx_products_json_size ON products ((CAST(attributes_json->>'$.size
 
 -- Index 6: Drop status and date window index for storefront queries
 CREATE INDEX idx_drops_status_window ON drops (status, start_time, end_time);
+

@@ -50,3 +50,4 @@ In FlashDrop, **Redis 7** operates as the in-memory atomic concurrency shield. I
 1. **Append-Only File (AOF)**: Configured with `appendfsync everysec` in `docker-compose.yml` to guarantee that active holds and counters survive container/process restarts.
 2. **Reconciliation from MySQL**: When the system boots, `redis/rebuild_stock_from_mysql.js` queries MySQL (the permanent source of truth) and synchronizes `drop:{id}:stock` counters before opening endpoints.
 3. **Cache Invalidation**: When an administrator updates a product price or description in MySQL, an event or webhook executes `DEL cache:product:{id}`, enforcing the Cache-Aside pattern.
+

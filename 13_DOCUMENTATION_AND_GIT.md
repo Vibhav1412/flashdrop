@@ -12,22 +12,24 @@
 
 ---
 
-## 2. Commit Log Architecture
+## 2. Commit Log Architecture (15+ Granular Conventional Commits)
 
 ```text
-ca22b8c chore(phase-0): scaffold project structure, docker-compose, and readme
-d82d29c docs: establish master project dump log and record phase 0
-[Upcoming Phase 1]: feat(phase-1): complete ER modeling, relational schema, and 3NF proofs
-[Upcoming Phase 2]: feat(phase-2): write 01_schema.sql and generate 02_seed.sql
-[Upcoming Phase 3]: feat(phase-3): build comprehensive query suite with recursive CTEs
-[Upcoming Phase 4]: feat(phase-4): implement sp_place_order, audit triggers, and events
-[Upcoming Phase 5]: feat(phase-5): configure database roles and least-privilege grants
-[Upcoming Phase 6]: test(phase-6): simulate isolation anomalies and deadlock scenarios
-[Upcoming Phase 7]: feat(phase-7): build redis lua hold scripts and CRUD test suite
-[Upcoming Phase 8]: feat(phase-8): develop next.js storefront and dual connection pool
-[Upcoming Phase 9]: feat(phase-9): implement chaos mode load generator and benchmark
-[Upcoming Phase 10]: test(phase-10): verify crash recovery and redis hydration
-[Upcoming Phase 11]: docs(phase-11): finalize portfolio report and viva defense guide
+* 857188a feat(phase-8): build complete next.js 14 full-stack app with dual-pool routing and storefront
+* b8bf423 fix(phase-7): ensure lua script arguments use string types for universal redis compatibility
+* 4903342 feat(phase-7): implement redis atomic lua holds, waiting room queue, and full RUD test suite
+* a7e5d5b feat(phase-6): implement transactions lab with isolation anomalies and deadlock simulation
+* fbc9998 fix(phase-5): remove explicit revokes in favor of mysql default-deny whitelist model
+* b9faf95 feat(phase-5): implement native mysql 8 roles and least-privilege db users
+* 457e10e feat(phase-4): implement views, indexes, functions, procedures with acid rollback, triggers, and events
+* 618e063 fix(phase-2): order admin user insertion before price_history foreign key reference
+* 188726b feat(phase-3): build comprehensive query library with recursive CTEs, window functions, and joins
+* 829c78d feat(phase-2): write 02_seed.sql with procedural generator for 10,000+ records
+* 3a9c987 feat(phase-2): write complete 01_schema.sql with 20 tables and BCNF constraints
+* 23081f2 chore: normalize line endings and link evaluation files in master index
+* 85465f4 docs: generate dedicated evaluation component files 01 through 14
+* d82d29c docs: establish master project dump log and record phase 0
+* ca22b8c chore(phase-0): scaffold project structure, docker-compose, and readme
 ```
 
 ---

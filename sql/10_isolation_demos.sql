@@ -132,3 +132,4 @@ SELECT * FROM inventory WHERE drop_id = 1 FOR UPDATE;
 
 -- Inspect the Deadlock in InnoDB Status Monitor:
 SHOW ENGINE INNODB STATUS\G
+

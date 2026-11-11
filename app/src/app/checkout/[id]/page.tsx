@@ -202,3 +202,4 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
+

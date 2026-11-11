@@ -126,3 +126,4 @@ export async function getQueuePosition(dropId: number | string, userId: number |
   const rank = await redis.zrank(`drop:${dropId}:queue`, String(userId));
   return rank !== null ? rank + 1 : null;
 }
+
