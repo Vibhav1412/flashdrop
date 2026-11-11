@@ -28,6 +28,7 @@ export const customerPool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
+  multipleStatements: true,
 });
 
 // ---------------------------------------------------------------------
@@ -44,6 +45,7 @@ export const adminPool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 15,
   queueLimit: 0,
+  multipleStatements: true,
 });
 
 // ---------------------------------------------------------------------
