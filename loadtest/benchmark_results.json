@@ -8,9 +8,9 @@
     "checkConstraintViolations": 0,
     "finalAvailable": 0,
     "deadlocksEncountered": 0,
-    "throughputRps": 3333,
-    "p50Ms": 256,
-    "p95Ms": 281
+    "throughputRps": 2584,
+    "p50Ms": 334,
+    "p95Ms": 366
   },
   "resultB": {
     "path": "Redis-Protected Layer",
@@ -21,8 +21,8 @@
     "rejectedOutOfStock": 900,
     "finalStock": 0,
     "deadlocksEncountered": 0,
-    "throughputRps": 55556,
-    "p50Ms": 10,
-    "p95Ms": 17
+    "throughputRps": 27778,
+    "p50Ms": 23,
+    "p95Ms": 30
   }
 }

@@ -9,9 +9,9 @@ Total Attempted Checkouts    1000                            1000
 Actual Units Sold / Held     100 units (Database Contention)  100 units (Exact Allocation)
 DB Check Violations / Oversell 0 aborted (CHECK error)     0 errors (Clean In-Memory Rejection)
 Transaction Deadlocks        0 aborted transactions       0 deadlocks
-Throughput                   3333 requests/sec                 55556 requests/sec
-p50 Latency                  256 ms                              10 ms
-p95 Latency                  281 ms                           17 ms
+Throughput                   2584 requests/sec                 27778 requests/sec
+p50 Latency                  334 ms                              23 ms
+p95 Latency                  366 ms                           30 ms
 Final Available Stock        0 units                            0 units
-Performance Gain             Baseline (Disk I/O Bottleneck)   17x Higher Throughput / 26x Faster
+Performance Gain             Baseline (Disk I/O Bottleneck)   11x Higher Throughput / 15x Faster
 ========================================================================================
