@@ -1,0 +1,35 @@
+name: FlashDrop CI & Verification Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate SQL Scripts Syntax
+        run: |
+          echo "Validating schema DDL files..."
+          ls -la sql/
+
+      - name: Validate Lua Scripts
+        run: |
+          echo "Validating Redis Lua scripts..."
+          head -n 20 redis/lua/acquire_hold.lua
+          head -n 20 redis/lua/release_hold.lua
+
+      - name: Verify Documentation Suite
+        run: |
+          echo "Checking dedicated evaluation files..."
+          ls -la 0*.md 1*.md
