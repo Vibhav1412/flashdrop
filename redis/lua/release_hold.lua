@@ -17,8 +17,8 @@ local deleted = redis.call('DEL', hold_key)
 -- 2. If hold existed and was deleted, restore stock
 if deleted == 1 then
     local restored_stock = redis.call('INCR', stock_key)
-    return {1, "HOLD_RELEASED", restored_stock}
+    return {1, "HOLD_RELEASED", tostring(restored_stock)}
 else
-    local current_stock = tonumber(redis.call('GET', stock_key) or 0)
-    return {0, "HOLD_NOT_FOUND_OR_EXPIRED", current_stock}
+    local current_stock = redis.call('GET', stock_key) or "0"
+    return {0, "HOLD_NOT_FOUND_OR_EXPIRED", tostring(current_stock)}
 end
