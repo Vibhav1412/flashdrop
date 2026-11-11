@@ -51,6 +51,30 @@ export default function DropDetailPage({ params }: { params: { id: string } }) {
   const [selectedSize, setSelectedSize] = useState('US 10.5');
   const [selectedColorKey, setSelectedColorKey] = useState('chicago');
 
+  // Live Simulated Contention Activity Stream (Redis Pub/Sub)
+  const [activities, setActivities] = useState([
+    { text: 'User #842 claimed hold for US 10.5', time: '12s ago' },
+    { text: 'User #193 completed checkout — Order #151', time: '28s ago' },
+    { text: 'User #409 joined queue at rank #23', time: '45s ago' },
+  ]);
+
+  useEffect(() => {
+    const feedInterval = setInterval(() => {
+      const mockUsers = [104, 219, 381, 492, 581, 622, 749, 811, 920];
+      const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+      const randomSize = SIZES[Math.floor(Math.random() * SIZES.length)];
+      const events = [
+        { text: `User #${randomUser} acquired 5-min hold (${randomSize})`, time: 'Just now' },
+        { text: `User #${randomUser} confirmed order via sp_place_order`, time: 'Just now' },
+        { text: `User #${randomUser} joined waiting room queue`, time: 'Just now' },
+      ];
+      const newEvent = events[Math.floor(Math.random() * events.length)];
+      setActivities((prev) => [newEvent, ...prev.slice(0, 2)]);
+    }, 4500);
+
+    return () => clearInterval(feedInterval);
+  }, []);
+
   const activeColor = COLORWAYS[selectedColorKey] || COLORWAYS['chicago'];
 
   // Fetch drop details and live Redis stock
@@ -180,6 +204,28 @@ export default function DropDetailPage({ params }: { params: { id: string } }) {
                 <div key={key} className="p-2.5 rounded-xl bg-zinc-950/70 border border-zinc-800/80">
                   <span className="text-zinc-500 block text-[10px] uppercase">{key}:</span>
                   <span className="text-white font-bold truncate block">{String(val)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Redis Pub/Sub Activity Stream */}
+          <div className="p-4 rounded-2xl bg-zinc-950/70 border border-zinc-800 space-y-2.5 shadow-lg">
+            <div className="flex items-center justify-between text-[11px] font-mono">
+              <span className="flex items-center space-x-2 text-zinc-400">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                <span className="font-bold text-white">Live Contention Feed</span>
+              </span>
+              <span className="text-[10px] text-zinc-500">Channel: drop:1:activity</span>
+            </div>
+            <div className="space-y-1.5">
+              {activities.map((item, i) => (
+                <div key={i} className="text-[11px] font-mono p-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between animate-fadeIn">
+                  <span className="text-zinc-300 truncate max-w-[240px] flex items-center space-x-1.5">
+                    <span className="text-rose-400">⚡</span>
+                    <span>{item.text}</span>
+                  </span>
+                  <span className="text-[10px] text-zinc-500 shrink-0">{item.time}</span>
                 </div>
               ))}
             </div>
