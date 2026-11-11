@@ -31,6 +31,12 @@ export default function RootLayout({
 
             <div className="flex items-center space-x-4">
               <Link 
+                href="/admin/queries" 
+                className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 transition"
+              >
+                SQL Console
+              </Link>
+              <Link 
                 href="/admin/dashboard" 
                 className="text-xs font-semibold px-3 py-1.5 rounded-md bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 transition"
               >
