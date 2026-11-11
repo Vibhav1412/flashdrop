@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminPool } from '@/lib/db';
 
-export const PRESET_QUERIES: Record<string, { title: string; category: string; description: string; sql: string }> = {
+const PRESET_QUERIES: Record<string, { title: string; category: string; description: string; sql: string }> = {
   'recursive_category_tree': {
     title: '1. Recursive CTE: Hierarchical Category Breadcrumbs',
     category: 'Recursive CTE (Component 7)',
