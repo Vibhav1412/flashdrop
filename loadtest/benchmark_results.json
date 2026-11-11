@@ -1,0 +1,28 @@
+{
+  "resultA": {
+    "path": "Unprotected MySQL",
+    "initialStock": 100,
+    "concurrentUsers": 1000,
+    "finalSold": 100,
+    "oversellCount": 0,
+    "checkConstraintViolations": 0,
+    "finalAvailable": 0,
+    "deadlocksEncountered": 0,
+    "throughputRps": 3333,
+    "p50Ms": 256,
+    "p95Ms": 281
+  },
+  "resultB": {
+    "path": "Redis-Protected Layer",
+    "initialStock": 100,
+    "concurrentUsers": 1000,
+    "successfulHolds": 100,
+    "oversellCount": 0,
+    "rejectedOutOfStock": 900,
+    "finalStock": 0,
+    "deadlocksEncountered": 0,
+    "throughputRps": 55556,
+    "p50Ms": 10,
+    "p95Ms": 17
+  }
+}

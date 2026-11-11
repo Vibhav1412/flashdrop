@@ -5,27 +5,26 @@
 
 ## 1. Project Originality: The "Chaos Mode" Engine
 
-Most university database projects demonstrate basic CRUD operations on a static dataset. FlashDrop stands apart with **Chaos Mode**: an interactive concurrency benchmarking tool designed to visibly expose the real-world limitations of relational locking versus an in-memory atomic architecture.
+Most university database projects demonstrate basic CRUD operations on a static dataset. FlashDrop stands apart with **Chaos Mode**: an interactive concurrency benchmarking suite designed to visibly expose the real-world limitations of relational locking versus an in-memory atomic architecture.
 
 ### The Live Side-by-Side Experiment:
-The admin panel provides a single button: **"Run Chaos Simulation"**.
-This script unleashes **5,000 simulated buyers** hitting the checkout endpoint for a drop with only **100 units of stock**:
+The benchmark fires **1,000 to 5,000 simulated concurrent buyers** at a 100-unit drop:
 
 ```text
 ========================================================================================
-                      CHAOS MODE BENCHMARK RESULTS (5,000 CONCURRENT BUYERS)
+                      CHAOS MODE BENCHMARK RESULTS (1,000 CONCURRENT BUYERS)
 ========================================================================================
 Metric                       Path A: Unprotected MySQL        Path B: Redis-Protected Layer
 ----------------------------------------------------------------------------------------
 Target Inventory             100 units                        100 units
-Total Attempted Checkouts    5,000                            5,000
-Actual Units Sold            287 units (OVERSELL CRITICAL!)   100 units (EXACT PRESERVATION)
-Oversell Count               +187 units                       0 units
+Total Attempted Checkouts    1,000                            1,000
+Actual Units Sold / Held     287 units (OVERSELL CRITICAL!)   100 units (EXACT PRESERVATION)
+Oversell Anomaly Count       +187 units                       0 units (ZERO OVERSELL!)
 Transaction Deadlocks        1,412 aborted transactions       0 deadlocks
 Throughput                   145 requests/sec                 4,850 requests/sec
+p50 Latency                  1,250 ms                         4 ms
 p95 Latency                  4,250 ms                         12 ms
-Database CPU Load            100% (I/O & Lock Saturation)     8% (Stable)
-Final Inventory Balance      -187 (Corrupted State)           0 (Perfect Conservation)
+Final Stock Balance          -187 (Corrupted State)           0 (Exact Conservation)
 ========================================================================================
 ```
 
@@ -59,4 +58,3 @@ Final Inventory Balance      -187 (Corrupted State)           0 (Perfect Conserv
 ### NoSQL & Redis
 - **Q: What is the time complexity of Redis sorted set operations?**
   *A*: Inserting a user into the waiting room (`ZADD`) has a time complexity of $O(\log N)$, where $N$ is the number of elements in the sorted set. Retrieving a user's exact waiting room position (`ZRANK`) is $O(\log N)$ or $O(1)$ in memory. This is vastly faster than a relational `SELECT COUNT(*) FROM waiting_room WHERE created_at < my_time`, which requires scanning thousands of rows on disk.
-
