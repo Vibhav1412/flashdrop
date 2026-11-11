@@ -19,14 +19,14 @@ const COLORWAYS: Record<string, { name: string; label: string; primary: string; 
     label: 'Stealth Grey / Dark Noir',
     primary: '#3F3F46',
     secondary: '#18181B',
-    image: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?auto=format&fit=crop&w=1000&q=85',
+    image: 'https://images.unsplash.com/photo-1622920883841-5bf72e392d8f?auto=format&fit=crop&w=1000&q=85',
   },
   'royal': {
     name: 'Royal Obsidian',
     label: 'Deep Obsidian / Summit White',
     primary: '#2563EB',
     secondary: '#F8FAFC',
-    image: 'https://images.unsplash.com/photo-1515955656352-a1fa3ffcd111?auto=format&fit=crop&w=1000&q=85',
+    image: 'https://images.unsplash.com/photo-1620794317321-bfd90092d065?auto=format&fit=crop&w=1000&q=85',
   },
   'mocha': {
     name: 'Travis Mocha',
