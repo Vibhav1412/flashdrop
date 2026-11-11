@@ -1,0 +1,372 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1450 1020" width="100%" height="100%" style="background:#09090b; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#09090b"/>
+      <stop offset="100%" stop-color="#111116"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <!-- Arrow & Crowfoot Markers -->
+    <marker id="crow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9" fill="none" stroke="#71717a" stroke-width="1.5"/>
+      <line x1="8" y1="0" x2="8" y2="10" stroke="#71717a" stroke-width="1.5"/>
+    </marker>
+    <marker id="one" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <line x1="4" y1="1" x2="4" y2="9" stroke="#71717a" stroke-width="1.5"/>
+      <line x1="8" y1="1" x2="8" y2="9" stroke="#71717a" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1450" height="1020" fill="url(#bgGrad)"/>
+
+  <!-- Title & Legend Header -->
+  <g transform="translate(40, 30)">
+    <text x="0" y="24" fill="#ffffff" font-size="22" font-weight="900" letter-spacing="1">PROJECT FLASHDROP ⚡ ENTERPRISE CROW'S FOOT ER DIAGRAM</text>
+    <text x="0" y="44" fill="#a1a1aa" font-size="11">20 Normalized Relational Entities in BCNF (MySQL 8.0 Core) • Cardinalities: || (One) to &lt; (Many)</text>
+    
+    <!-- Legend Badges -->
+    <g transform="translate(850, 5)">
+      <rect x="0" y="0" width="120" height="22" rx="4" fill="#1e293b" stroke="#3b82f6" stroke-width="1"/>
+      <text x="10" y="15" fill="#60a5fa" font-size="10" font-weight="bold">● Users &amp; Auth</text>
+
+      <rect x="130" y="0" width="130" height="22" rx="4" fill="#2a1215" stroke="#f43f5e" stroke-width="1"/>
+      <text x="140" y="15" fill="#fb7185" font-size="10" font-weight="bold">● Catalog &amp; Drops</text>
+
+      <rect x="270" y="0" width="130" height="22" rx="4" fill="#062d1f" stroke="#10b981" stroke-width="1"/>
+      <text x="280" y="15" fill="#34d399" font-size="10" font-weight="bold">● Orders &amp; Ledger</text>
+
+      <rect x="410" y="0" width="130" height="22" rx="4" fill="#241235" stroke="#a855f7" stroke-width="1"/>
+      <text x="420" y="15" fill="#c084fc" font-size="10" font-weight="bold">● Social &amp; Security</text>
+    </g>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- MODULE 1: AUTHENTICATION & USERS (Left Top) -->
+  <!-- ============================================================ -->
+
+  <!-- ROLES -->
+  <g transform="translate(40, 90)" filter="url(#shadow)">
+    <rect width="180" height="110" rx="8" fill="#18181b" stroke="#3b82f6" stroke-width="1.5"/>
+    <path d="M 0 0 L 180 0 L 180 28 L 0 28 Z" fill="#1e293b"/>
+    <text x="12" y="19" fill="#93c5fd" font-size="12" font-weight="bold">roles</text>
+    <text x="130" y="18" fill="#64748b" font-size="9">STRONG</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 role_id (PK)</text>
+    <text x="12" y="64" fill="#d4d4d8" font-size="10">role_name (UQ)</text>
+    <text x="12" y="82" fill="#71717a" font-size="10">description</text>
+    <text x="12" y="100" fill="#71717a" font-size="10">created_at</text>
+  </g>
+
+  <!-- USERS -->
+  <g transform="translate(270, 90)" filter="url(#shadow)">
+    <rect width="210" height="175" rx="8" fill="#18181b" stroke="#3b82f6" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#1e293b"/>
+    <text x="12" y="19" fill="#93c5fd" font-size="12" font-weight="bold">users</text>
+    <text x="160" y="18" fill="#64748b" font-size="9">STRONG</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 user_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ role_id (FK)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">email (UQ)</text>
+    <text x="12" y="100" fill="#71717a" font-size="10">password_hash</text>
+    <text x="12" y="118" fill="#d4d4d8" font-size="10">full_name</text>
+    <text x="12" y="136" fill="#fb7185" font-size="10">status (active/susp)</text>
+    <text x="12" y="154" fill="#71717a" font-size="10">created_at / updated</text>
+  </g>
+
+  <!-- ADDRESSES -->
+  <g transform="translate(40, 240)" filter="url(#shadow)">
+    <rect width="180" height="130" rx="8" fill="#18181b" stroke="#3b82f6" stroke-width="1"/>
+    <path d="M 0 0 L 180 0 L 180 26 L 0 26 Z" fill="#1e293b"/>
+    <text x="12" y="18" fill="#93c5fd" font-size="11" font-weight="bold">addresses</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 address_id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="80" fill="#d4d4d8" font-size="10">street_line</text>
+    <text x="12" y="98" fill="#71717a" font-size="10">city, state, postal</text>
+    <text x="12" y="116" fill="#71717a" font-size="10">country, is_default</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- MODULE 2: CATALOG, PRODUCTS & FLASH DROPS (Middle Column) -->
+  <!-- ============================================================ -->
+
+  <!-- CATEGORIES -->
+  <g transform="translate(540, 90)" filter="url(#shadow)">
+    <rect width="190" height="120" rx="8" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+    <path d="M 0 0 L 190 0 L 190 28 L 0 28 Z" fill="#2a1215"/>
+    <text x="12" y="19" fill="#fda4af" font-size="12" font-weight="bold">categories</text>
+    <text x="135" y="18" fill="#fb7185" font-size="9">SELF-REF</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 category_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ parent_id (FK, Null)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">name, slug (UQ)</text>
+    <text x="12" y="100" fill="#71717a" font-size="10">Recursive Breadcrumb</text>
+  </g>
+
+  <!-- PRODUCTS -->
+  <g transform="translate(540, 250)" filter="url(#shadow)">
+    <rect width="210" height="150" rx="8" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#2a1215"/>
+    <text x="12" y="19" fill="#fda4af" font-size="12" font-weight="bold">products</text>
+    <text x="155" y="18" fill="#64748b" font-size="9">STRONG</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 product_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ category_id (FK)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">sku (UQ), title</text>
+    <text x="12" y="100" fill="#f59e0b" font-size="10">base_price (CHECK &gt; 0)</text>
+    <text x="12" y="118" fill="#c084fc" font-size="10">{attributes_json} (Size)</text>
+    <text x="12" y="136" fill="#71717a" font-size="10">created_at / updated</text>
+  </g>
+
+  <!-- PRICE HISTORY -->
+  <g transform="translate(540, 435)" filter="url(#shadow)">
+    <rect width="200" height="110" rx="8" fill="#18181b" stroke="#f43f5e" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#2a1215"/>
+    <text x="12" y="18" fill="#fda4af" font-size="11" font-weight="bold">price_history</text>
+    <text x="150" y="17" fill="#64748b" font-size="9">WEAK</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 history_id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ product_id (FK)</text>
+    <text x="12" y="80" fill="#d4d4d8" font-size="10">old_price, new_price</text>
+    <text x="12" y="98" fill="#38bdf8" font-size="10">↳ changed_by_user_id (FK)</text>
+  </g>
+
+  <!-- DROPS -->
+  <g transform="translate(800, 250)" filter="url(#shadow)">
+    <rect width="210" height="150" rx="8" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#2a1215"/>
+    <text x="12" y="19" fill="#fda4af" font-size="12" font-weight="bold">drops</text>
+    <text x="155" y="18" fill="#64748b" font-size="9">STRONG</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 drop_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ product_id (FK)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">title, slug (UQ)</text>
+    <text x="12" y="100" fill="#fb7185" font-size="10">start_time, end_time</text>
+    <text x="12" y="118" fill="#34d399" font-size="10">status (sched/live/conc)</text>
+    <text x="12" y="136" fill="#71717a" font-size="10">max_per_user (CHECK)</text>
+  </g>
+
+  <!-- INVENTORY (1:1 with drops) -->
+  <g transform="translate(800, 435)" filter="url(#shadow)">
+    <rect width="220" height="150" rx="8" fill="#18181b" stroke="#f43f5e" stroke-width="1.5"/>
+    <path d="M 0 0 L 220 0 L 220 28 L 0 28 Z" fill="#2a1215"/>
+    <text x="12" y="19" fill="#fda4af" font-size="12" font-weight="bold">inventory</text>
+    <text x="160" y="18" fill="#34d399" font-size="9">1:1 CONSTR</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 inventory_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ drop_id (UQ, FK)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">total_allocated (&gt; 0)</text>
+    <text x="12" y="100" fill="#f59e0b" font-size="10">reserved_holds (&gt;= 0)</text>
+    <text x="12" y="118" fill="#34d399" font-size="10">sold_quantity (&gt;= 0)</text>
+    <text x="12" y="136" fill="#fb7185" font-size="10">available_qty (CHECK&gt;=0)</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- MODULE 3: ORDERS, PAYMENTS & DOUBLE-ENTRY LEDGER (Right) -->
+  <!-- ============================================================ -->
+
+  <!-- ORDERS -->
+  <g transform="translate(1070, 90)" filter="url(#shadow)">
+    <rect width="210" height="170" rx="8" fill="#18181b" stroke="#10b981" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#062d1f"/>
+    <text x="12" y="19" fill="#a7f3d0" font-size="12" font-weight="bold">orders</text>
+    <text x="155" y="18" fill="#64748b" font-size="9">STRONG</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 order_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="82" fill="#38bdf8" font-size="10">↳ drop_id (FK)</text>
+    <text x="12" y="100" fill="#d4d4d8" font-size="10">total_amount (CHECK)</text>
+    <text x="12" y="118" fill="#71717a" font-size="10">discount_amount, final</text>
+    <text x="12" y="136" fill="#34d399" font-size="10">status (paid/pending)</text>
+    <text x="12" y="154" fill="#71717a" font-size="10">created_at / updated</text>
+  </g>
+
+  <!-- ORDER_ITEMS -->
+  <g transform="translate(1070, 290)" filter="url(#shadow)">
+    <rect width="200" height="120" rx="8" fill="#18181b" stroke="#10b981" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#062d1f"/>
+    <text x="12" y="18" fill="#a7f3d0" font-size="11" font-weight="bold">order_items</text>
+    <text x="150" y="17" fill="#64748b" font-size="9">WEAK</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 item_id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ order_id (FK)</text>
+    <text x="12" y="80" fill="#38bdf8" font-size="10">↳ product_id (FK)</text>
+    <text x="12" y="98" fill="#d4d4d8" font-size="10">quantity (&gt; 0), unit_price</text>
+  </g>
+
+  <!-- PAYMENTS -->
+  <g transform="translate(1070, 440)" filter="url(#shadow)">
+    <rect width="200" height="125" rx="8" fill="#18181b" stroke="#10b981" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#062d1f"/>
+    <text x="12" y="18" fill="#a7f3d0" font-size="11" font-weight="bold">payments</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 payment_id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ order_id (UQ, FK)</text>
+    <text x="12" y="80" fill="#d4d4d8" font-size="10">payment_method (wallet)</text>
+    <text x="12" y="98" fill="#d4d4d8" font-size="10">amount, status (captured)</text>
+    <text x="12" y="116" fill="#71717a" font-size="10">created_at</text>
+  </g>
+
+  <!-- WALLETS (1:1 with users) -->
+  <g transform="translate(270, 300)" filter="url(#shadow)">
+    <rect width="210" height="120" rx="8" fill="#18181b" stroke="#10b981" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#062d1f"/>
+    <text x="12" y="19" fill="#a7f3d0" font-size="12" font-weight="bold">wallets</text>
+    <text x="160" y="18" fill="#34d399" font-size="9">1:1 CONSTR</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 wallet_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ user_id (UQ, FK)</text>
+    <text x="12" y="82" fill="#34d399" font-size="10">balance (CHECK &gt;= 0)</text>
+    <text x="12" y="100" fill="#71717a" font-size="10">currency (USD), is_locked</text>
+  </g>
+
+  <!-- WALLET_LEDGER (Double-Entry Balanced) -->
+  <g transform="translate(270, 455)" filter="url(#shadow)">
+    <rect width="220" height="150" rx="8" fill="#18181b" stroke="#10b981" stroke-width="1.5"/>
+    <path d="M 0 0 L 220 0 L 220 28 L 0 28 Z" fill="#062d1f"/>
+    <text x="12" y="19" fill="#a7f3d0" font-size="12" font-weight="bold">wallet_ledger</text>
+    <text x="145" y="18" fill="#fbbf24" font-size="9">DOUBLE-ENTRY</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 entry_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ wallet_id (FK)</text>
+    <text x="12" y="82" fill="#fb7185" font-size="10">entry_type (CREDIT/DEBIT)</text>
+    <text x="12" y="100" fill="#d4d4d8" font-size="10">amount (CHECK &gt; 0)</text>
+    <text x="12" y="118" fill="#34d399" font-size="10">balance_after (CHECK &gt;= 0)</text>
+    <text x="12" y="136" fill="#71717a" font-size="10">reference_type / id</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- MODULE 4: SOCIAL, LOYALTY, LOTTERY & SECURITY (Bottom Row) -->
+  <!-- ============================================================ -->
+
+  <!-- REFERRALS (Self-referencing) -->
+  <g transform="translate(40, 640)" filter="url(#shadow)">
+    <rect width="200" height="130" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1.5"/>
+    <path d="M 0 0 L 200 0 L 200 28 L 0 28 Z" fill="#241235"/>
+    <text x="12" y="19" fill="#e9d5ff" font-size="12" font-weight="bold">referrals</text>
+    <text x="145" y="18" fill="#c084fc" font-size="9">SELF-REF</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 referral_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ referrer_id (FK users)</text>
+    <text x="12" y="82" fill="#38bdf8" font-size="10">↳ referee_id (UQ, FK)</text>
+    <text x="12" y="100" fill="#d4d4d8" font-size="10">reward_points, status</text>
+    <text x="12" y="118" fill="#71717a" font-size="10">Recursive Referral Tree</text>
+  </g>
+
+  <!-- LOYALTY TIERS & USER TIERS -->
+  <g transform="translate(270, 640)" filter="url(#shadow)">
+    <rect width="200" height="120" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#241235"/>
+    <text x="12" y="18" fill="#e9d5ff" font-size="11" font-weight="bold">loyalty_tiers</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 tier_id (PK)</text>
+    <text x="12" y="62" fill="#d4d4d8" font-size="10">tier_name (UQ)</text>
+    <text x="12" y="80" fill="#d4d4d8" font-size="10">min_spend (CHECK &gt;= 0)</text>
+    <text x="12" y="98" fill="#34d399" font-size="10">discount_pct (0-100%)</text>
+  </g>
+
+  <g transform="translate(270, 785)" filter="url(#shadow)">
+    <rect width="200" height="100" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#241235"/>
+    <text x="12" y="18" fill="#e9d5ff" font-size="11" font-weight="bold">user_tiers</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="80" fill="#38bdf8" font-size="10">↳ tier_id (FK)</text>
+  </g>
+
+  <!-- LOTTERY ENTRIES -->
+  <g transform="translate(500, 640)" filter="url(#shadow)">
+    <rect width="200" height="120" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 26 L 0 26 Z" fill="#241235"/>
+    <text x="12" y="18" fill="#e9d5ff" font-size="11" font-weight="bold">lottery_entries</text>
+    <text x="12" y="44" fill="#f59e0b" font-size="10">🔑 entry_id (PK)</text>
+    <text x="12" y="62" fill="#38bdf8" font-size="10">↳ drop_id (FK)</text>
+    <text x="12" y="80" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="98" fill="#d4d4d8" font-size="10">is_winner, ticket_no</text>
+  </g>
+
+  <!-- PURCHASE ATTEMPTS (TELEMETRY) -->
+  <g transform="translate(730, 640)" filter="url(#shadow)">
+    <rect width="210" height="135" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#241235"/>
+    <text x="12" y="19" fill="#e9d5ff" font-size="12" font-weight="bold">purchase_attempts</text>
+    <text x="145" y="18" fill="#64748b" font-size="9">TELEMETRY</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 attempt_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="82" fill="#38bdf8" font-size="10">↳ drop_id (FK)</text>
+    <text x="12" y="100" fill="#d4d4d8" font-size="10">ip_address, user_agent</text>
+    <text x="12" y="118" fill="#fb7185" font-size="10">outcome (RATE_LIMITED...)</text>
+  </g>
+
+  <!-- FRAUD FLAGS -->
+  <g transform="translate(970, 640)" filter="url(#shadow)">
+    <rect width="210" height="130" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1.5"/>
+    <path d="M 0 0 L 210 0 L 210 28 L 0 28 Z" fill="#241235"/>
+    <text x="12" y="19" fill="#e9d5ff" font-size="12" font-weight="bold">fraud_flags</text>
+    <text x="145" y="18" fill="#fb7185" font-size="9">SECURITY</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 flag_id (PK)</text>
+    <text x="12" y="64" fill="#38bdf8" font-size="10">↳ user_id (FK)</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">reason, severity</text>
+    <text x="12" y="100" fill="#fb7185" font-size="10">trg_auto_suspend_fraud</text>
+    <text x="12" y="118" fill="#71717a" font-size="10">flagged_at</text>
+  </g>
+
+  <!-- AUDIT LOG -->
+  <g transform="translate(1210, 640)" filter="url(#shadow)">
+    <rect width="200" height="135" rx="8" fill="#18181b" stroke="#a855f7" stroke-width="1"/>
+    <path d="M 0 0 L 200 0 L 200 28 L 0 28 Z" fill="#241235"/>
+    <text x="12" y="19" fill="#e9d5ff" font-size="12" font-weight="bold">audit_log</text>
+    <text x="140" y="18" fill="#64748b" font-size="9">APPEND-ONLY</text>
+    <text x="12" y="46" fill="#f59e0b" font-size="10">🔑 log_id (PK)</text>
+    <text x="12" y="64" fill="#d4d4d8" font-size="10">table_name, action</text>
+    <text x="12" y="82" fill="#d4d4d8" font-size="10">record_id</text>
+    <text x="12" y="100" fill="#c084fc" font-size="10">{old_data}, {new_data}</text>
+    <text x="12" y="118" fill="#71717a" font-size="10">performed_by, logged_at</text>
+  </g>
+
+  <!-- ============================================================ -->
+  <!-- RELATIONSHIP CONNECTORS (Crow's Foot Lines) -->
+  <!-- ============================================================ -->
+  
+  <!-- roles -> users (1:N) -->
+  <path d="M 220 145 L 270 145" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- users -> wallets (1:1) -->
+  <path d="M 375 265 L 375 300" fill="none" stroke="#34d399" stroke-width="2" marker-start="url(#one)" marker-end="url(#one)"/>
+
+  <!-- wallets -> wallet_ledger (1:N) -->
+  <path d="M 375 420 L 375 455" fill="none" stroke="#34d399" stroke-width="2" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- users -> addresses (1:N) -->
+  <path d="M 270 200 L 220 270" fill="none" stroke="#60a5fa" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- categories -> products (1:N) -->
+  <path d="M 645 210 L 645 250" fill="none" stroke="#fb7185" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- products -> price_history (1:N) -->
+  <path d="M 645 400 L 645 435" fill="none" stroke="#fb7185" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- products -> drops (1:N) -->
+  <path d="M 750 325 L 800 325" fill="none" stroke="#fb7185" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- drops -> inventory (1:1) -->
+  <path d="M 900 400 L 900 435" fill="none" stroke="#fb7185" stroke-width="2" marker-start="url(#one)" marker-end="url(#one)"/>
+
+  <!-- users -> orders (1:N) -->
+  <path d="M 480 145 Q 770 120 1070 145" fill="none" stroke="#34d399" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- drops -> orders (1:N) -->
+  <path d="M 1010 325 Q 1040 280 1070 220" fill="none" stroke="#34d399" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- orders -> order_items (1:N) -->
+  <path d="M 1170 260 L 1170 290" fill="none" stroke="#34d399" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- orders -> payments (1:1) -->
+  <path d="M 1170 410 L 1170 440" fill="none" stroke="#34d399" stroke-width="2" marker-start="url(#one)" marker-end="url(#one)"/>
+
+  <!-- users -> referrals (1:N) -->
+  <path d="M 270 250 Q 140 400 140 640" fill="none" stroke="#c084fc" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- users -> fraud_flags (1:N) -->
+  <path d="M 480 230 Q 800 400 970 650" fill="none" stroke="#c084fc" stroke-width="1.5" marker-start="url(#one)" marker-end="url(#crow)"/>
+
+  <!-- categories self-reference loop -->
+  <path d="M 730 130 C 770 110, 770 170, 730 150" fill="none" stroke="#fb7185" stroke-width="1.5" marker-end="url(#crow)"/>
+  <text x="775" y="145" fill="#fda4af" font-size="9">parent_id</text>
+
+  <!-- Footer Banner Info -->
+  <g transform="translate(40, 960)">
+    <rect width="1370" height="35" rx="6" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+    <text x="20" y="22" fill="#71717a" font-size="11">ENGINE: InnoDB (MySQL 8.0) | STORAGE: utf8mb4_unicode_ci | NORMALIZATION: BCNF | TRANSACTIONS: ACID Pessimistic Row-Locking</text>
+    <text x="1200" y="22" fill="#34d399" font-size="11" font-weight="bold">100% RELATIONAL FIDELITY</text>
+  </g>
+</svg>
+

@@ -73,7 +73,7 @@ FROM purchase_attempts
 WHERE drop_id = 1
 ORDER BY ip_address, attempted_at ASC;
 ```
-*Viva Defense*: If `delta_microseconds` is less than 50,000 $\mu\text{s}$ (50 milliseconds), no human could physically have clicked the button that quickly; this mathematically flags automated bot scripts in the database.
+*Viva Defense*: If `delta_microseconds` is less than 50,000 µs (50 milliseconds), no human could physically have clicked the button that quickly; this mathematically flags automated bot scripts in the database.
 
 ---
 

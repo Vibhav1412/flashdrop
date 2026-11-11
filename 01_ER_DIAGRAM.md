@@ -68,7 +68,12 @@ Total Entities: **19 Relational Entities** in Third Normal Form (3NF) / Boyce-Co
 
 ---
 
-## 4. Crow's Foot Entity-Relationship Diagram (Mermaid)
+## 4. Crow's Foot Entity-Relationship Diagram
+
+### Pictorial Architecture Diagram (20 Normalized Relational Tables)
+![FlashDrop Crow's Foot ER Diagram](docs/er_diagram.svg)
+
+### Mermaid Structural Diagram
 
 ```mermaid
 erDiagram
@@ -107,13 +112,13 @@ erDiagram
 
 ## 5. Identifying vs Non-Identifying Relationships (Viva Defense)
 
-1. **`orders` $\rightarrow$ `order_items` (Identifying Relationship / Weak Entity)**:
+1. **`orders` → `order_items` (Identifying Relationship / Weak Entity)**:
    - An `order_item` cannot exist without its parent `order`. If an order is canceled before fulfillment or purged in testing, its items cease to have independent semantic meaning. The composite or foreign key reference enforces strict parent-child lifecycle linkage (`ON DELETE CASCADE`).
-2. **`wallets` $\rightarrow$ `wallet_ledger` (Identifying Relationship / Weak Entity)**:
+2. **`wallets` → `wallet_ledger` (Identifying Relationship / Weak Entity)**:
    - A `wallet_ledger` entry is an immutable delta tied strictly to a parent wallet. Ledger records are append-only; an orphaned ledger row is invalid in financial accounting.
-3. **`categories` $\rightarrow$ `categories` (Self-Referencing Unary Relationship)**:
+3. **`categories` → `categories` (Self-Referencing Unary Relationship)**:
    - Modeled via `parent_id REFERENCES categories(category_id) ON DELETE RESTRICT`. Top-level categories have `parent_id IS NULL`. This structure allows arbitrary tree depth, traversed efficiently via **Recursive Common Table Expressions (CTEs)**.
-4. **`users` $\rightarrow$ `referrals` (Self-Referencing Binary Relationship)**:
+4. **`users` → `referrals` (Self-Referencing Binary Relationship)**:
    - Modeled via `referrer_id` and `referee_id`, both referencing `users(user_id)`. Enforces a directed acyclic graph (DAG) representing the viral user referral tree.
 
 ---

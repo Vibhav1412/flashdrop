@@ -36,8 +36,8 @@ innodb_flush_log_at_trx_commit = 1
 
 ### 2.1 Single-Threaded Atomic Lua Scripting
 During flash drops, Redis processes thousands of checkouts per second. To prevent race conditions without relational disk locks, Redis executes `acquire_hold.lua`:
-- Memory access latency: $\approx 15\ \mu\text{s}$.
-- Throughput: $> 55,000\ \text{requests/sec}$.
+- Memory access latency: ~15 µs.
+- Throughput: > 55,000 requests/sec.
 - Zero CPU lock thrashing.
 
 ### 2.2 Memory Eviction & Namespace Strategy
@@ -71,3 +71,4 @@ export const adminPool = mysql.createPool({
 });
 ```
 - Customer queries cannot starve administrative monitoring queries because pools maintain separate socket allocations.
+

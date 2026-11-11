@@ -53,6 +53,9 @@ A traditional, single-node relational database architecture suffers critical fai
 +---------------------------------------------+                       +---------------------------------------------+
 ```
 
+### Visual Relational Architecture (Crow's Foot ER Diagram)
+![FlashDrop Enterprise Crow's Foot ER Diagram](docs/er_diagram.svg)
+
 ---
 
 ## 3. DBMS Evaluation Criteria & Rubrics Mapping (50 Marks)
