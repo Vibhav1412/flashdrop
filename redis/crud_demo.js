@@ -37,14 +37,15 @@ async function runNoSqlCrudSuite() {
     console.log('1. [String] Initialized live stock: SET drop:1:stock 100');
 
     // B. Create Session Store (Hash with TTL)
-    await redis.hset('session:token_user_2', {
-      userId: '2',
-      email: 'user_2@flashdrop.com',
-      role: 'customer',
-      loginTime: new Date().toISOString(),
-    });
+    await redis.hmset(
+      'session:token_user_2',
+      'userId', '2',
+      'email', 'user_2@flashdrop.com',
+      'role', 'customer',
+      'loginTime', new Date().toISOString()
+    );
     await redis.expire('session:token_user_2', 3600);
-    console.log('2. [Hash] Stored user session with 1-hour TTL: HSET session:token_user_2');
+    console.log('2. [Hash] Stored user session with 1-hour TTL: HMSET session:token_user_2');
 
     // C. Create Waiting Room Queue (Sorted Set with millisecond timestamp scores)
     const now = Date.now();
