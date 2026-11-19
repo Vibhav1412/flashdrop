@@ -27,21 +27,31 @@ export async function POST(request: Request) {
       maxRetriesPerRequest: 2,
     });
 
+    let origAvailable = 50;
+    let origSold = 50;
+    let origTotal = 100;
+    let origHolds = 0;
+
     try {
       // -------------------------------------------------------------
       // PATH A: Real MySQL Unprotected Concurrency Benchmark
       // -------------------------------------------------------------
       // Snapshot current drop 1 state so we can cleanly restore it
       const [origInv]: any = await adminDb.query(
-        'SELECT available_quantity, sold_quantity, total_allocated FROM inventory WHERE drop_id = 1'
+        'SELECT available_quantity, sold_quantity, total_allocated, reserved_holds FROM inventory WHERE drop_id = 1'
       );
-      const origAvailable = origInv[0]?.available_quantity ?? 68;
-      const origSold = origInv[0]?.sold_quantity ?? 2;
+      if (origInv && origInv.length > 0) {
+        origAvailable = origInv[0].available_quantity ?? 50;
+        origSold = origInv[0].sold_quantity ?? 50;
+        origTotal = origInv[0].total_allocated ?? 100;
+        origHolds = origInv[0].reserved_holds ?? 0;
+      }
 
-      // Temporarily set test initialStock
+      // Temporarily set test initialStock while strictly satisfying chk_inventory_conservation:
+      // (available_quantity + reserved_holds + sold_quantity = total_allocated)
       await adminDb.execute(
-        'UPDATE inventory SET available_quantity = ?, sold_quantity = 0 WHERE drop_id = 1',
-        [initialStock]
+        'UPDATE inventory SET total_allocated = ?, available_quantity = ?, sold_quantity = 0, reserved_holds = 0 WHERE drop_id = 1',
+        [initialStock, initialStock]
       );
 
       const clientPool = mysql.createPool({
@@ -112,7 +122,7 @@ export async function POST(request: Request) {
       const oldHolds = await redis.keys('hold:1:*');
       if (oldHolds.length > 0) await redis.del(...oldHolds);
 
-      // Load Lua script from redis directory
+      // Load Lua script from redis directory with robust embedded fallback
       let luaScript = '';
       const candidates = [
         path.join(process.cwd(), '..', 'redis', 'lua', 'acquire_hold.lua'),
@@ -123,6 +133,24 @@ export async function POST(request: Request) {
           luaScript = fs.readFileSync(p, 'utf8');
           break;
         }
+      }
+      if (!luaScript) {
+        luaScript = `
+          local stockKey = KEYS[1]
+          local holdKey  = KEYS[2]
+          local ttlSecs  = tonumber(ARGV[1]) or 300
+          local userId   = ARGV[2]
+          if redis.call('EXISTS', holdKey) == 1 then
+              return {0, 'ALREADY_HOLDING', redis.call('GET', stockKey) or '0'}
+          end
+          local stock = tonumber(redis.call('GET', stockKey) or '0')
+          if stock <= 0 then
+              return {0, 'OUT_OF_STOCK', '0'}
+          end
+          redis.call('DECR', stockKey)
+          redis.call('SETEX', holdKey, ttlSecs, userId)
+          return {1, 'HOLD_ACQUIRED', tostring(stock - 1)}
+        `;
       }
 
       let pathBSuccess = 0;
@@ -170,8 +198,8 @@ export async function POST(request: Request) {
       // Cleanly Restore Drop 1 Original State in MySQL & Redis
       // -------------------------------------------------------------
       await adminDb.execute(
-        'UPDATE inventory SET available_quantity = ?, sold_quantity = ? WHERE drop_id = 1',
-        [origAvailable, origSold]
+        'UPDATE inventory SET total_allocated = ?, available_quantity = ?, sold_quantity = ?, reserved_holds = ? WHERE drop_id = 1',
+        [origTotal, origAvailable, origSold, origHolds]
       );
       await redis.set('drop:1:stock', origAvailable);
 
@@ -210,6 +238,13 @@ export async function POST(request: Request) {
         },
       });
     } finally {
+      try {
+        await adminDb.execute(
+          'UPDATE inventory SET total_allocated = ?, available_quantity = ?, sold_quantity = ?, reserved_holds = ? WHERE drop_id = 1',
+          [origTotal, origAvailable, origSold, origHolds]
+        );
+        await redis.set('drop:1:stock', origAvailable);
+      } catch (_) {}
       await adminDb.end();
       redis.disconnect();
     }
