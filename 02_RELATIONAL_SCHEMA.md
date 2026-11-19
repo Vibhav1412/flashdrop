@@ -5,7 +5,16 @@
 
 ## 1. Visual Relational Schema Diagram
 
-> **Vector Schema Diagram File**: [`docs/relational_schema.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema.svg) (Open in browser or VS Code SVG previewer)
+### Formal Relational Schema (20 Tables in BCNF | 152 Columns | 24 Foreign Keys)
+
+![FlashDrop Relational Schema Diagram](docs/relational_schema.png)
+
+> **High-Resolution Vector / Printable Documents**:
+> - **A4 Sheet Printable Document**: [`docs/relational_schema_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema_printable.html) (Pure white background, 3-page academic report with schema table specs)
+> - **High-Resolution Vector SVG**: [`docs/relational_schema_white.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema_white.svg)
+> - **Relational Vector Source**: [`docs/relational_schema.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema.svg)
+
+### Structural Schema Mapping
 
 ```mermaid
 erDiagram
