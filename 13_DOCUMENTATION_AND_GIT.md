@@ -40,8 +40,8 @@
 | :--- | :--- |
 | `README.md` | Executive summary, polyglot architecture, quickstart, rubrics matrix. |
 | `PROJECT_MASTER_LOG.md` | Complete unabridged engineering log containing all code and proofs. |
-| `01_ER_DIAGRAM.md` | Component 1: Crow's Foot ERD, cardinalities, self-referencing relations. |
-| `02_RELATIONAL_SCHEMA.md` | Component 2: 19-table schema, candidate keys, FDs, 3NF/BCNF proofs. |
+| `01_ER_DIAGRAM.md` | Component 1: Peter Chen Notation Conceptual ERD, cardinalities, weak entities, self-referencing relations. |
+| `02_RELATIONAL_SCHEMA.md` | Component 2: 20-table schema, candidate keys, FDs, 3NF/BCNF proofs. |
 | `03_SQL_DDL_IMPLEMENTATION.md` | Component 3: Storage engines, constraints, foreign key actions. |
 | `04_NOSQL_DATABASE_CREATION.md`| Component 4: Redis data structures, memory limits, AOF persistence. |
 | `05_TECHNOLOGY_JUSTIFICATION.md`| Component 5: Polyglot persistence, CAP theorem, ACID vs BASE. |
