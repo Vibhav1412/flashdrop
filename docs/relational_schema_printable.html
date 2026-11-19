@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Project FlashDrop - Relational Schema Diagram & BCNF Normalization (A4 Printable)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;600;800;900&display=swap');
+
+    :root {
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --border: #cbd5e1;
+      --bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    /* Print action toolbar (hidden on paper) */
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .toolbar h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-print {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background: #1d4ed8;
+    }
+
+    /* A4 Document Containers */
+    .a4-page {
+      background: #ffffff;
+      width: 297mm;
+      min-height: 210mm;
+      margin: 25px auto;
+      padding: 15mm 15mm;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
+
+    .a4-portrait {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm 18mm;
+    }
+
+    /* Header styling */
+    .header-box {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .inst-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .main-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+
+    .meta-tag {
+      font-size: 10px;
+      font-weight: 700;
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Diagram wrapper */
+    .diagram-container {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .diagram-container img,
+    .diagram-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Section headings */
+    h2 {
+      font-size: 15px;
+      font-weight: 800;
+      border-left: 4px solid #2563eb;
+      padding-left: 8px;
+      margin-top: 18px;
+      margin-bottom: 10px;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      font-size: 11px;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    /* Schema list */
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .schema-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      background: #fafafa;
+    }
+
+    .schema-card strong {
+      color: #0f172a;
+      font-size: 12px;
+    }
+
+    .pk {
+      text-decoration: underline;
+      font-weight: 800;
+      color: #b45309;
+    }
+
+    .fk {
+      color: #0369a1;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 15px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .a4-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always;
+        break-after: page;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+      @page portrait-page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+      .a4-portrait {
+        page: portrait-page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print Toolbar -->
+  <div class="toolbar">
+    <div>
+      <h1>⚡ FLASHDROP: COMPONENT 02 RELATIONAL SCHEMA (PES UNIVERSITY CSE)</h1>
+      <span style="font-size: 11px; color: #94a3b8;">Formatted strictly for A4 sheet printing &amp; evaluation viva defense</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <a href="/" style="color: #cbd5e1; font-size: 12px; text-decoration: none;">&larr; Return to Storefront</a>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span>
+        <span>Print to A4 / Save as PDF</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: RELATIONAL SCHEMA DIAGRAM (A4 LANDSCAPE) -->
+  <!-- ========================================================================= -->
+  <div class="a4-page">
+    <div class="header-box">
+      <div>
+        <div class="inst-title">PES University • Dept. of Computer Science &amp; Engineering • DBMS Level 3</div>
+        <div class="main-title">Project FlashDrop: 20-Table Relational Schema Diagram</div>
+      </div>
+      <div style="text-align: right;">
+        <span class="meta-tag">BCNF NORMALIZED • INNODB ENGINE</span>
+        <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Authors: Vibhav M &amp; Vainik</div>
+      </div>
+    </div>
+
+    <!-- Embedded High-Resolution Vector Diagram -->
+    <div class="diagram-container">
+      <img src="relational_schema_white.svg" alt="FlashDrop Relational Schema Diagram (20 Tables in BCNF)">
+    </div>
+
+    <div class="footer-note">
+      <span>Key: <span class="pk">Underlined</span> = Primary Key (PK) │ <span class="fk">↳ Name (FK)</span> = Foreign Key │ Connectors = Directed Referential Integrity</span>
+      <span>Page 1 of 3: Relational Architecture</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: ALGEBRAIC SCHEMA & ER MAPPING RULES (A4 PORTRAIT) -->
+  <!-- ========================================================================= -->
+  <div class="a4-page a4-portrait">
+    <div class="header-box">
+      <div>
+        <div class="inst-title">Component 02: Relational Schema Representation</div>
+        <div class="main-title">Algebraic Notation &amp; ER Mapping Rules</div>
+      </div>
+      <div style="text-align: right;">
+        <span class="meta-tag">20 RELATIONS</span>
+      </div>
+    </div>
+
+    <h2>1. Formal Schema Representation (PK Underlined, FK Asterisked)</h2>
+    <div class="schema-grid">
+      <div class="schema-card">
+        <strong>1. roles</strong><br>
+        (<span class="pk">role_id</span>, role_name, description, created_at)
+      </div>
+      <div class="schema-card">
+        <strong>2. users</strong><br>
+        (<span class="pk">user_id</span>, email, password_hash, first_name, last_name, phone, status, failed_logins, <span class="fk">role_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>3. addresses</strong><br>
+        (<span class="pk">address_id</span>, address_line1, city, state, postal_code, country, is_default, <span class="fk">user_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>4. categories</strong><br>
+        (<span class="pk">category_id</span>, name, slug, description, <span class="fk">parent_id* (self-ref)</span>)
+      </div>
+      <div class="schema-card">
+        <strong>5. products</strong><br>
+        (<span class="pk">product_id</span>, sku, title, description, base_price, {attributes_json}, <span class="fk">category_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>6. price_history</strong><br>
+        (<span class="pk">history_id</span>, old_price, new_price, changed_at, <span class="fk">product_id*</span>, <span class="fk">changed_by*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>7. drops</strong><br>
+        (<span class="pk">drop_id</span>, title, slug, drop_price, start_time, end_time, status, max_per_user, <span class="fk">product_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>8. inventory</strong><br>
+        (<span class="pk">inventory_id</span>, total_allocated, reserved_holds, sold_quantity, available_qty, version, <span class="fk">drop_id* UQ</span>)
+      </div>
+      <div class="schema-card">
+        <strong>9. orders</strong><br>
+        (<span class="pk">order_id</span>, order_number, total_amount, discount, final_amount, status, <span class="fk">user_id*</span>, <span class="fk">drop_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>10. order_items</strong><br>
+        (<span class="pk">item_id</span>, quantity, unit_price, subtotal, <span class="fk">order_id* CASCADE</span>, <span class="fk">product_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>11. payments</strong><br>
+        (<span class="pk">payment_id</span>, payment_method, txn_ref, amount, status, {gateway_json}, <span class="fk">order_id* UQ</span>)
+      </div>
+      <div class="schema-card">
+        <strong>12. wallets</strong><br>
+        (<span class="pk">wallet_id</span>, balance, currency, is_locked, updated_at, <span class="fk">user_id* UQ</span>)
+      </div>
+      <div class="schema-card">
+        <strong>13. wallet_ledger</strong><br>
+        (<span class="pk">ledger_id</span>, entry_type, amount, balance_after, ref_type, ref_id, <span class="fk">wallet_id* CASCADE</span>)
+      </div>
+      <div class="schema-card">
+        <strong>14. referrals</strong><br>
+        (<span class="pk">referral_id</span>, referral_code, status, reward_amount, <span class="fk">referrer_id*</span>, <span class="fk">referee_id* UQ</span>)
+      </div>
+      <div class="schema-card">
+        <strong>15. loyalty_tiers</strong><br>
+        (<span class="pk">tier_id</span>, tier_name, min_spend, discount_pct, early_access_mins)
+      </div>
+      <div class="schema-card">
+        <strong>16. user_tiers</strong><br>
+        (<span class="pk">id</span>, achieved_at, expires_at, <span class="fk">user_id*</span>, <span class="fk">tier_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>17. lottery_entries</strong><br>
+        (<span class="pk">entry_id</span>, ticket_number, entry_time, is_winner, <span class="fk">drop_id*</span>, <span class="fk">user_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>18. purchase_attempts</strong><br>
+        (<span class="pk">attempt_id</span>, ip_address, user_agent, status, latency_ms, <span class="fk">drop_id*</span>, <span class="fk">user_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>19. fraud_flags</strong><br>
+        (<span class="pk">flag_id</span>, risk_score, flag_reason, is_resolved, flagged_at, <span class="fk">user_id*</span>)
+      </div>
+      <div class="schema-card">
+        <strong>20. audit_log</strong><br>
+        (<span class="pk">log_id</span>, table_name, action, record_id, {old_json}, {new_json}, <span class="fk">user_id*</span>)
+      </div>
+    </div>
+
+    <h2>2. The 7 ER-to-Relational Mapping Rules</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Rule</th>
+          <th style="width: 25%;">ER Construct</th>
+          <th>Relational Transformation Applied in FlashDrop</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Rule 1</strong></td>
+          <td>Strong Entity Sets</td>
+          <td>Direct relation creation with simple attributes. Designate PK (<code>users</code>, <code>products</code>, <code>drops</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 2</strong></td>
+          <td>Weak Entity Sets</td>
+          <td>Include partial key + owner PK as composite foreign key with <code>ON DELETE CASCADE</code> (<code>order_items</code>, <code>wallet_ledger</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 3</strong></td>
+          <td>1:1 Relationships</td>
+          <td>Place PK of one entity as foreign key with <code>UNIQUE</code> constraint in child table (<code>wallets.user_id UNIQUE</code>, <code>inventory.drop_id UNIQUE</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 4</strong></td>
+          <td>1:N Relationships</td>
+          <td>Place PK of "1" side as foreign key in "N" side relation (<code>products.category_id</code>, <code>orders.user_id</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 5</strong></td>
+          <td>M:N Relationships</td>
+          <td>Resolve using associative bridge relation with composite foreign keys (<code>lottery_entries</code>, <code>user_tiers</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 6</strong></td>
+          <td>Recursive / Unary</td>
+          <td>Add foreign key referencing same relation's PK (<code>categories.parent_id</code>, <code>referrals.referrer_id</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>Rule 7</strong></td>
+          <td>Multi-Valued Attr</td>
+          <td>Modeled using native MySQL 8 <code>JSON</code> typed column (<code>products.attributes_json</code> for size/color).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer-note">
+      <span>FlashDrop Commerce Engine • Relational Model Mapping</span>
+      <span>Page 2 of 3: Algebraic Schema</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 3: FUNCTIONAL DEPENDENCIES & NORMALIZATION PROOFS (A4 PORTRAIT) -->
+  <!-- ========================================================================= -->
+  <div class="a4-page a4-portrait">
+    <div class="header-box">
+      <div>
+        <div class="inst-title">Component 02: Normalization Proofs</div>
+        <div class="main-title">BCNF Decomposition &amp; FD Verification</div>
+      </div>
+      <div style="text-align: right;">
+        <span class="meta-tag">1NF &rarr; 2NF &rarr; 3NF &rarr; BCNF</span>
+      </div>
+    </div>
+
+    <h2>1. Functional Dependency (FD) Analysis on Core Relations</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 20%;">Relation</th>
+          <th style="width: 45%;">Functional Dependencies (FDs)</th>
+          <th>Candidate Keys &amp; Normal Form</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>orders</strong></td>
+          <td>
+            <strong>FD₁:</strong> {order_id} &rarr; {order_number, user_id, drop_id, total_amount, final_amount, status}<br>
+            <strong>FD₂:</strong> {order_number} &rarr; {order_id, user_id, drop_id, final_amount, status}
+          </td>
+          <td>
+            Candidate Keys: {order_id}, {order_number}<br>
+            <strong>Status: BCNF</strong> (Every determinant is a superkey).
+          </td>
+        </tr>
+        <tr>
+          <td><strong>inventory</strong></td>
+          <td>
+            <strong>FD₁:</strong> {inventory_id} &rarr; {drop_id, total_allocated, available_qty, version}<br>
+            <strong>FD₂:</strong> {drop_id} &rarr; {inventory_id, total_allocated, available_qty, version}
+          </td>
+          <td>
+            Candidate Keys: {inventory_id}, {drop_id}<br>
+            <strong>Status: BCNF</strong> (Zero partial or transitive dependencies).
+          </td>
+        </tr>
+        <tr>
+          <td><strong>wallet_ledger</strong></td>
+          <td>
+            <strong>FD₁:</strong> {ledger_id} &rarr; {wallet_id, entry_type, amount, balance_after, ref_id}
+          </td>
+          <td>
+            Candidate Key: {ledger_id}<br>
+            <strong>Status: BCNF</strong> (Single-attribute determinant).
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Step-by-Step Normalization Proofs</h2>
+    <div style="font-size: 11px; space-y-2; line-height: 1.6;">
+      <p><strong>1. First Normal Form (1NF):</strong> All attributes have atomic domain values. Non-atomic attributes (e.g. shipping street, city, state, postal) are decomposed. No repeating groups exist.</p>
+      <p style="margin-top: 6px;"><strong>2. Second Normal Form (2NF):</strong> Must be in 1NF and contain zero partial dependencies. In composite bridge relations (<code>order_items</code>, <code>user_tiers</code>), non-prime attributes functionally depend on the entire candidate key, not a proper subset.</p>
+      <p style="margin-top: 6px;"><strong>3. Third Normal Form (3NF):</strong> Must be in 2NF and contain zero transitive dependencies (<code>X &rarr; Y</code> and <code>Y &rarr; Z</code>). For instance, <code>orders</code> stores <code>user_id</code>, but does NOT store <code>email</code> or <code>customer_name</code>, which transitively depend on <code>user_id</code>.</p>
+      <p style="margin-top: 6px;"><strong>4. Boyce-Codd Normal Form (BCNF):</strong> A relation is in BCNF if for every non-trivial functional dependency <code>X &rarr; Y</code>, <code>X</code> is a superkey. Because every table uses unique candidate keys and surrogate primary keys, every determinant is a superkey.</p>
+    </div>
+
+    <h2>3. Examiner Viva Defense Q&amp;A (Component 2)</h2>
+    <div style="font-size: 11px; line-height: 1.5; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 8px;">
+      <p><strong>Q1: What is the exact difference between 3NF and BCNF?</strong><br>
+      <em>Answer:</em> 3NF permits a dependency <code>X &rarr; Y</code> if <code>Y</code> is a prime attribute (part of a candidate key), even if <code>X</code> is not a superkey. BCNF removes this relaxation: every determinant <code>X</code> MUST be a superkey without exception. FlashDrop satisfies BCNF across all 20 tables.</p>
+      
+      <p style="margin-top: 8px;"><strong>Q2: Did you denormalize any tables? Why?</strong><br>
+      <em>Answer:</em> In <code>inventory</code>, we store <code>available_quantity</code> alongside <code>total_allocated</code>, <code>reserved_holds</code>, and <code>sold_quantity</code>, strictly protected by the database check constraint: <code>CHECK (available_quantity + reserved_holds + sold_quantity = total_allocated)</code>. This deliberate denormalization eliminates expensive <code>COUNT(*)</code> aggregation queries over the massive <code>orders</code> and <code>order_items</code> tables during sub-millisecond stock checks.</p>
+    </div>
+
+    <div class="footer-note">
+      <span>PES University • DBMS Level 3 Evaluation • Project FlashDrop</span>
+      <span>Page 3 of 3: Normalization Defense</span>
+    </div>
+  </div>
+
+</body>
+</html>
