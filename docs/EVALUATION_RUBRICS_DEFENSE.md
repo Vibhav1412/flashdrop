@@ -35,10 +35,10 @@
 
 - **Codebase Evidence**: 
   - [`01_ER_DIAGRAM.md`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/01_ER_DIAGRAM.md)
-  - [`docs/er_diagram.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/er_diagram.svg) (1450x1020 Vector Crow's Foot diagram)
+  - [`docs/chen_er_diagram.png`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/chen_er_diagram.png) (Ultra-High-Resolution Peter Chen ER Diagram)
+  - [`docs/chen_er_diagram_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/chen_er_diagram_printable.html) (A4 Printable Academic Report)
 - **What is Done Good**:
-  - Covers **20 relational entities** with strict Crow's Foot cardinality indicators: Exactly One (`||`), One or More (`|{`), Zero or More (`o{`).
-  - Categorized into 4 clear color-coded business domains (Users/Auth, Catalog/Drops, Orders/Ledger, Social/Fraud).
+  - Covers **20 relational entities** using textbook **Peter Chen Notation** (rectangles for entities, diamonds for relationships, ovals for attributes, double rectangles/diamonds for weak entities, branching ovals for composite attributes, dashed ovals for derived attributes).
   - Explicitly documents **identifying vs non-identifying relationships** (e.g. `orders` identifying `order_items`, `wallets` identifying `wallet_ledger`).
   - Models **two recursive self-referencing relationships**: `categories.parent_id` (unary 1:N) and `referrals.referrer_id` (DAG).
 - **Teacher's Grill Questions**:
@@ -56,6 +56,8 @@
 
 - **Codebase Evidence**: 
   - [`02_RELATIONAL_SCHEMA.md`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/02_RELATIONAL_SCHEMA.md)
+  - [`docs/relational_schema.png`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema.png) (Ultra-High-Resolution 20-Table Relational Schema Diagram)
+  - [`docs/relational_schema_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema_printable.html) (A4 Printable Academic Report)
 - **What is Done Good**:
   - Formal relational algebra notation for all tables.
   - Functional Dependency (FD) analysis with determinants and candidate superkeys.
@@ -304,7 +306,9 @@
    - Tab 2: `http://localhost:3000/admin/chaos` (Live Chaos Mode Concurrency Lab).
    - Tab 3: `http://localhost:3000/admin/queries` (Interactive SQL Query Console with Recursive CTEs).
 3. **If Asked for ER Diagram**:
-   - Open [`01_ER_DIAGRAM.md`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/01_ER_DIAGRAM.md) or [`docs/er_diagram.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/er_diagram.svg).
+   - Open [`01_ER_DIAGRAM.md`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/01_ER_DIAGRAM.md) or [`docs/chen_er_diagram_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/chen_er_diagram_printable.html) (Textbook Peter Chen Notation).
+4. **If Asked for Relational Schema**:
+   - Open [`02_RELATIONAL_SCHEMA.md`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/02_RELATIONAL_SCHEMA.md) or [`docs/relational_schema_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema_printable.html) (20 Tables in BCNF).
 
 ---
 *Generated & Hardened for PES University CSE DBMS Evaluation 2026.*
