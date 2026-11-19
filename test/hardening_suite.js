@@ -5,10 +5,17 @@
 // ACID rollback on insufficient funds, and RBAC defense.
 // =====================================================================
 
-const mysql = require('mysql2/promise');
-const Redis = require('ioredis');
-const fs = require('fs');
 const path = require('path');
+function getModule(name) {
+  try {
+    return require(name);
+  } catch (e) {
+    return require(path.resolve(__dirname, '../app/node_modules', name));
+  }
+}
+const mysql = getModule('mysql2/promise');
+const Redis = getModule('ioredis');
+const fs = require('fs');
 
 async function runHardeningSuite() {
   console.clear();

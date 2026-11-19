@@ -1,48 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function ChaosModeControlPage() {
   const [running, setRunning] = useState(false);
   const [activeTab, setActiveTab] = useState<'comparison' | 'unprotected' | 'protected'>('comparison');
   const [simResults, setSimResults] = useState<any>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
 
-  // Trigger high-concurrency simulation benchmark
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.authenticated || data.user?.role !== 'admin') {
+          setUnauthorized(true);
+        }
+      })
+      .catch(() => setUnauthorized(true));
+  }, []);
+
+  // Trigger real high-concurrency simulation benchmark against live MySQL & Redis
   const handleRunChaos = async () => {
     setRunning(true);
     setSimResults(null);
 
-    // Simulate 5,000 concurrent purchase attempts
-    setTimeout(() => {
-      setSimResults({
-        totalRequests: 5000,
-        initialStock: 100,
-        unprotected: {
-          path: 'MySQL Unprotected (Direct UPDATE without locks)',
-          actualUnitsSold: 287,
-          oversellCount: 187,
-          oversellRate: '+187% CRITICAL OVERSELL',
-          deadlocksEncountered: 1412,
-          throughputRps: 145,
-          p95LatencyMs: 4250,
-          finalInventoryState: -187,
-          databaseCpuLoad: '100% (Lock Saturation)',
-        },
-        protected: {
-          path: 'Redis-Protected Layer (Atomic Lua Script)',
-          actualUnitsSold: 100,
-          oversellCount: 0,
-          oversellRate: '0% (EXACT CONSERVATION)',
-          deadlocksEncountered: 0,
-          throughputRps: 4850,
-          p95LatencyMs: 12,
-          finalInventoryState: 0,
-          databaseCpuLoad: '8% (Normal)',
-        },
+    try {
+      const res = await fetch('/api/admin/chaos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ concurrentUsers: 500, initialStock: 50 }),
       });
+      const data = await res.json();
+      if (data.success) {
+        setSimResults(data.results);
+      } else {
+        alert(data.error || 'Benchmark run failed');
+      }
+    } catch {
+      alert('Network error connecting to benchmark API');
+    } finally {
       setRunning(false);
-    }, 2500);
+    }
   };
+
+  if (unauthorized) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-zinc-900 border border-rose-500/30 text-center space-y-4 shadow-2xl">
+        <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl mx-auto border border-rose-500/30">
+          🔒
+        </div>
+        <h2 className="text-xl font-black text-white">Administrator Role Required</h2>
+        <p className="text-xs text-zinc-400 font-mono">
+          The Concurrency Chaos Laboratory requires <code className="text-rose-400">adminPool</code> privileges to simulate load against MySQL 8.0 &amp; Redis.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/login"
+            className="inline-block px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-rose-600/30"
+          >
+            Sign In with Admin Account &rarr;
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -85,7 +107,7 @@ export default function ChaosModeControlPage() {
                 <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
                   Path A: Raw Relational
                 </span>
-                <span className="text-xs font-mono text-rose-400 font-bold">145 req/sec</span>
+                <span className="text-xs font-mono text-rose-400 font-bold">{simResults.unprotected.throughputRps} req/sec</span>
               </div>
 
               <div>
@@ -99,15 +121,15 @@ export default function ChaosModeControlPage() {
                   <span className="text-white font-bold">{simResults.initialStock} units</span>
                 </div>
                 <div className="flex justify-between p-2.5 rounded bg-rose-950/60 border border-rose-800/60">
-                  <span className="text-rose-300 font-bold">Actual Units Sold:</span>
+                  <span className="text-rose-300 font-bold">Actual Units Sold / Attempted:</span>
                   <span className="text-rose-400 font-black text-sm">{simResults.unprotected.actualUnitsSold} units</span>
                 </div>
                 <div className="flex justify-between p-2.5 rounded bg-rose-950/60 border border-rose-800/60">
                   <span className="text-rose-300 font-bold">Oversell Anomaly:</span>
-                  <span className="text-rose-400 font-black">+{simResults.unprotected.oversellCount} OVERSOLD!</span>
+                  <span className="text-rose-400 font-black">{simResults.unprotected.oversellRate}</span>
                 </div>
                 <div className="flex justify-between p-2.5 rounded bg-zinc-950/60 border border-rose-900/40">
-                  <span className="text-zinc-400">Deadlocks Aborted:</span>
+                  <span className="text-zinc-400">Deadlocks / Aborts:</span>
                   <span className="text-rose-400 font-bold">{simResults.unprotected.deadlocksEncountered} errors</span>
                 </div>
                 <div className="flex justify-between p-2.5 rounded bg-zinc-950/60 border border-rose-900/40">
@@ -115,13 +137,13 @@ export default function ChaosModeControlPage() {
                   <span className="text-rose-400 font-bold">{simResults.unprotected.p95LatencyMs} ms</span>
                 </div>
                 <div className="flex justify-between p-2.5 rounded bg-zinc-950/60 border border-rose-900/40">
-                  <span className="text-zinc-400">Database CPU:</span>
-                  <span className="text-rose-400 font-bold">{simResults.unprotected.databaseCpuLoad}</span>
+                  <span className="text-zinc-400">Benchmark Duration:</span>
+                  <span className="text-rose-400 font-bold">{simResults.unprotected.elapsedMs} ms</span>
                 </div>
               </div>
 
               <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-900/40 text-[11px] text-rose-300 leading-relaxed">
-                ⚠️ <strong>Viva Explanation:</strong> Read-modify-write race conditions under concurrent threads cause lost updates, selling 287 items when only 100 existed!
+                ⚠️ <strong>Viva Explanation:</strong> Concurrent read-modify-write transactions compete for row locks on disk, resulting in higher latency and concurrency anomalies without in-memory protection.
               </div>
             </div>
 
@@ -131,7 +153,7 @@ export default function ChaosModeControlPage() {
                 <span className="text-xs font-mono font-bold uppercase px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   Path B: Polyglot Guard
                 </span>
-                <span className="text-xs font-mono text-emerald-400 font-bold">4,850 req/sec</span>
+                <span className="text-xs font-mono text-emerald-400 font-bold">{simResults.protected.throughputRps} req/sec</span>
               </div>
 
               <div>
@@ -167,7 +189,7 @@ export default function ChaosModeControlPage() {
               </div>
 
               <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/40 text-[11px] text-emerald-300 leading-relaxed">
-                ✅ <strong>Viva Explanation:</strong> Single-threaded Lua script atomicity guarantees exactly 100 units are held. All 4,900 excess requests rejected in sub-milliseconds without touching MySQL disk I/O!
+                ✅ <strong>Viva Explanation:</strong> Single-threaded Lua script atomicity guarantees exactly {simResults.protected.actualUnitsSold} units are held with zero deadlocks. Excess buyers are rejected in sub-milliseconds without touching MySQL disk I/O!
               </div>
             </div>
           </div>

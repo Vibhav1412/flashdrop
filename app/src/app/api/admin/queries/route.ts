@@ -33,8 +33,8 @@ FROM referral_tree GROUP BY tier_depth ORDER BY tier_depth;`,
     title: '3. Window Function: LAG() Checkout Inter-Arrival Delta',
     category: 'Window Functions (Component 7)',
     description: 'Computes microsecond inter-arrival latency deltas between consecutive burst checkout attempts.',
-    sql: `SELECT attempt_id, user_id, drop_id, outcome, created_at,
-       COALESCE(TIMESTAMPDIFF(MICROSECOND, LAG(created_at) OVER (PARTITION BY drop_id ORDER BY created_at), created_at) / 1000.0, 0) AS delta_ms
+    sql: `SELECT attempt_id, user_id, drop_id, status, latency_ms, attempted_at,
+       COALESCE(TIMESTAMPDIFF(MICROSECOND, LAG(attempted_at) OVER (PARTITION BY drop_id ORDER BY attempted_at), attempted_at) / 1000.0, 0) AS delta_ms
 FROM purchase_attempts WHERE drop_id = 1 LIMIT 12;`,
   },
   'window_running_gmv': {
@@ -48,13 +48,13 @@ FROM orders ORDER BY created_at LIMIT 15;`,
   'correlated_fraud_check': {
     title: '5. Correlated Subquery: High-Velocity Fraud Detection',
     category: 'Correlated Subqueries (Component 7)',
-    description: 'Finds flagged users who also triggered RATE_LIMITED outcomes via correlated EXISTS.',
-    sql: `SELECT u.user_id, u.email, u.status, f.reason, f.severity, f.flagged_at
+    description: 'Finds flagged users who also triggered rate_limited attempts via correlated EXISTS.',
+    sql: `SELECT u.user_id, u.email, u.status, f.flag_reason, f.risk_score, f.flagged_at
 FROM users u
 INNER JOIN fraud_flags f ON u.user_id = f.user_id
 WHERE EXISTS (
   SELECT 1 FROM purchase_attempts pa 
-  WHERE pa.user_id = u.user_id AND pa.outcome = 'RATE_LIMITED'
+  WHERE pa.user_id = u.user_id AND pa.status = 'rate_limited'
 )
 LIMIT 10;`,
   },
@@ -74,8 +74,8 @@ FROM products LIMIT 6;`,
     category: 'Double-Entry Integrity (Component 8)',
     description: 'Mathematically verifies that sum(credits) - sum(debits) in wallet_ledger equals wallets.balance.',
     sql: `SELECT w.wallet_id, w.user_id, w.balance AS stated_balance,
-       COALESCE(SUM(CASE WHEN wl.transaction_type = 'CREDIT' THEN wl.amount ELSE -wl.amount END), 0) AS calculated_ledger_balance,
-       COUNT(wl.entry_id) AS total_ledger_entries
+       COALESCE(SUM(CASE WHEN wl.entry_type = 'CREDIT' THEN wl.amount ELSE -wl.amount END), 0) AS calculated_ledger_balance,
+       COUNT(wl.ledger_id) AS total_ledger_entries
 FROM wallets w
 LEFT JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
 GROUP BY w.wallet_id, w.user_id, w.balance

@@ -5,9 +5,16 @@
 // Max Marks: 7
 // =====================================================================
 
-const Redis = require('ioredis');
-const fs = require('fs');
 const path = require('path');
+function getModule(name) {
+  try {
+    return require(name);
+  } catch (e) {
+    return require(path.resolve(__dirname, '../app/node_modules', name));
+  }
+}
+const Redis = getModule('ioredis');
+const fs = require('fs');
 
 // Connect to Redis on localhost (native or Docker)
 const redis = new Redis({

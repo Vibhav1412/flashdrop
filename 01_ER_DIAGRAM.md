@@ -13,7 +13,7 @@ FlashDrop models a high-concurrency limited-drop commerce ecosystem. The databas
 - Anti-bot lottery entries, purchase attempt telemetry, and fraud detection flags.
 - Comprehensive security audit logging.
 
-Total Entities: **19 Relational Entities** in Third Normal Form (3NF) / Boyce-Codd Normal Form (BCNF).
+Total Entities: **20 Relational Entities** in Third Normal Form (3NF) / Boyce-Codd Normal Form (BCNF).
 
 ---
 

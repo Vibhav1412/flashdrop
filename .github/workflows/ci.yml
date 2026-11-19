@@ -7,8 +7,25 @@ on:
     branches: [ main ]
 
 jobs:
-  lint-and-validate:
+  test-and-verify:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: admin_secure_pass_123
+          MYSQL_DATABASE: flashdrop
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -18,18 +35,38 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Validate SQL Scripts Syntax
+      - name: Install Application Dependencies
         run: |
-          echo "Validating schema DDL files..."
-          ls -la sql/
+          cd app
+          npm ci
 
-      - name: Validate Lua Scripts
+      - name: Initialize MySQL Database Schema & Seed Data
         run: |
-          echo "Validating Redis Lua scripts..."
-          head -n 20 redis/lua/acquire_hold.lua
-          head -n 20 redis/lua/release_hold.lua
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/01_schema.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/03_views_indexes.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/04_functions.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/05_procedures.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/06_triggers.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/08_roles.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -padmin_secure_pass_123 flashdrop < sql/02_seed.sql
 
-      - name: Verify Documentation Suite
+      - name: Hydrate In-Memory Redis Stock
         run: |
-          echo "Checking dedicated evaluation files..."
-          ls -la 0*.md 1*.md
+          NODE_PATH=app/node_modules node redis/rebuild_stock_from_mysql.js
+
+      - name: Run Automated Seed Integrity Verification
+        run: |
+          NODE_PATH=app/node_modules node test/verify_seed_counts.js
+
+      - name: Run NoSQL CRUD / RUD Demonstration Suite
+        run: |
+          NODE_PATH=app/node_modules node redis/crud_demo.js
+
+      - name: Run System Hardening & RBAC Defense Suite
+        run: |
+          NODE_PATH=app/node_modules node test/hardening_suite.js
+
+      - name: Next.js Production Build Typecheck
+        run: |
+          cd app
+          npm run build

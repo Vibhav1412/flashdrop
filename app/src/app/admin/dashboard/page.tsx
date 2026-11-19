@@ -8,6 +8,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [attackRunning, setAttackRunning] = useState(false);
   const [attackAlert, setAttackAlert] = useState<any>(null);
+  const [unauthorized, setUnauthorized] = useState(false);
 
   const fetchMetrics = () => {
     fetch('/api/admin/metrics')
@@ -20,7 +21,20 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchMetrics();
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.authenticated || data.user?.role !== 'admin') {
+          setUnauthorized(true);
+          setLoading(false);
+        } else {
+          fetchMetrics();
+        }
+      })
+      .catch(() => {
+        setUnauthorized(true);
+        setLoading(false);
+      });
   }, []);
 
   const handleSimulateBotAttack = async () => {
@@ -40,6 +54,28 @@ export default function AdminDashboardPage() {
       setAttackRunning(false);
     }
   };
+
+  if (unauthorized) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-zinc-900 border border-rose-500/30 text-center space-y-4 shadow-2xl">
+        <div className="w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl mx-auto border border-rose-500/30">
+          🔒
+        </div>
+        <h2 className="text-xl font-black text-white">Administrator Role Required</h2>
+        <p className="text-xs text-zinc-400 font-mono">
+          This portal routes through <code className="text-rose-400">adminPool</code> with full operational privileges on MySQL 8.0.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/login"
+            className="inline-block px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-rose-600/30"
+          >
+            Sign In with Admin Account &rarr;
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div className="p-12 text-center text-zinc-500 font-mono">Aggregating database telemetry...</div>;

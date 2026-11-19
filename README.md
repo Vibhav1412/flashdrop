@@ -43,7 +43,7 @@ A traditional, single-node relational database architecture suffers critical fai
 +---------------------------------------------+   Startup Hydration   +---------------------------------------------+
 |               MySQL 8.0 Engine              | <===================  |               Redis 7.0 Engine              |
 | ------------------------------------------- |                       | ------------------------------------------- |
-| * 19 Relational Tables in 3NF / BCNF        |                       | * drop:{id}:stock (Atomic Counter)          |
+| * 20 Relational Tables in 3NF / BCNF        |                       | * drop:{id}:stock (Atomic Counter)          |
 | * Foreign Keys, CHECK (stock >= 0)          |                       | * drop:{id}:queue (Sorted Set Waiting Room) |
 | * Double-Entry Wallet Ledger Balance Trigger|                       | * hold:{drop}:{user} (5-Min Atomic Hold)    |
 | * Stored Procedures (place_order Transaction|                       | * rate:{user}:{ip} (Sliding-Window Limiter) |
@@ -66,7 +66,7 @@ This repository fulfills the **Experiential Learning Level 3 MiniProject Evaluat
 |---|----------------------|:---------:|-----------------------------|:------:|
 | 1 | **ER diagram** | 2 | Complete Crow's Foot ERD with cardinalities, strong/weak entities, and self-referencing relationships (`categories`, `referrals`). | Phase 1 |
 | 2 | **Relational schema with keys, relationships, and constraints** | 3 | Formal relational schema in 3NF/BCNF with primary, foreign, composite keys, and integrity constraints. | Phase 1 |
-| 3 | **SQL database implementation - DDL with constraints** | 4 | `sql/01_schema.sql` across 19 tables (`CHECK`, `UNIQUE`, `NOT NULL`, `DEFAULT`, `ON DELETE CASCADE/RESTRICT`). | Phase 2 |
+| 3 | **SQL database implementation - DDL with constraints** | 4 | `sql/01_schema.sql` across 20 tables (`CHECK`, `UNIQUE`, `NOT NULL`, `DEFAULT`, `ON DELETE CASCADE/RESTRICT`). | Phase 2 |
 | 4 | **NoSQL/Vector database creation** | 4 | Redis 7 setup, key design, data structures (Counters, Hashes, Sorted Sets, Lists, Pub/Sub channels). | Phase 0 & 7 |
 | 5 | **Technology justification** | 1 | Formal analysis of relational (ACID, durability, ledger) vs NoSQL (atomic in-memory latency, non-blocking holds). | Phase 1 & Docs |
 | 6 | **DML operations** | 4 | `sql/02_seed.sql` generating thousands of production-representative records across users, products, drops, and orders. | Phase 2 |

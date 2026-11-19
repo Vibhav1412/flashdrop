@@ -3,7 +3,7 @@
 
 ---
 
-## 1. Relational Schema Representation (19 Tables)
+## 1. Relational Schema Representation (20 Tables)
 
 The relational schema is defined using relational algebra notation:
 `TABLE_NAME (Primary_Key_Column, Non_Key_Columns..., Foreign_Key_Column*)`
@@ -93,7 +93,7 @@ The relational schema is defined using relational algebra notation:
 
 4. **Boyce-Codd Normal Form (BCNF)**:
    - A relation is in BCNF if and only if for every non-trivial functional dependency `X → Y`, `X` is a superkey.
-   - In all 19 tables in FlashDrop, all determinants are candidate keys or superkeys. Thus, the entire schema satisfies BCNF.
+   - In all 20 tables in FlashDrop, all determinants are candidate keys or superkeys. Thus, the entire schema satisfies BCNF.
 
 ---
 

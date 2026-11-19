@@ -14,16 +14,16 @@ export async function POST(request: Request) {
     // 1. Log burst rate-limited attempts
     for (let i = 0; i < 5; i++) {
       await adminPool.execute(
-        `INSERT INTO purchase_attempts (user_id, drop_id, ip_address, user_agent, outcome)
-         VALUES (?, 1, ?, 'Mozilla/5.0 HeadlessBot/2.4 (ConcurrencyContentionAttack)', 'RATE_LIMITED')`,
+        `INSERT INTO purchase_attempts (user_id, drop_id, ip_address, user_agent, status, latency_ms)
+         VALUES (?, 1, ?, 'Mozilla/5.0 HeadlessBot/2.4 (ConcurrencyContentionAttack)', 'rate_limited', 14)`,
         [target.user_id, attackerIp]
       );
     }
 
     // 2. Insert into fraud_flags -> Fires trigger trg_auto_suspend_fraud_user
     const [flagRes]: any = await adminPool.execute(
-      `INSERT INTO fraud_flags (user_id, reason, severity)
-       VALUES (?, 'Redis Sliding-Window Rate Limiter tripped (>30 req/sec from bot IP)', 'critical')`,
+      `INSERT INTO fraud_flags (user_id, flag_reason, risk_score)
+       VALUES (?, 'Redis Sliding-Window Rate Limiter tripped (>30 req/sec from bot IP)', 95.00)`,
       [target.user_id]
     );
 

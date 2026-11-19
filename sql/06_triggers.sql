@@ -97,5 +97,21 @@ BEGIN
     END IF;
 END$$
 
+-- ---------------------------------------------------------------------
+-- Trigger 5: trg_validate_wallet_balance_integrity (BEFORE UPDATE on wallets)
+-- Purpose: Physical invariant guard. Aborts any direct balance modification
+--          that would cause prepaid wallet funds to drop below zero.
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_validate_wallet_balance_integrity$$
+CREATE TRIGGER trg_validate_wallet_balance_integrity
+BEFORE UPDATE ON wallets
+FOR EACH ROW
+BEGIN
+    IF NEW.balance < 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'WALLET BALANCE INTEGRITY VIOLATION: Wallet funds cannot drop below zero.';
+    END IF;
+END$$
+
 DELIMITER ;
 

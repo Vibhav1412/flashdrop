@@ -3,7 +3,15 @@
 // Automated Database Verification Script for all 20 Tables
 // =====================================================================
 
-const mysql = require('mysql2/promise');
+const path = require('path');
+function getModule(name) {
+  try {
+    return require(name);
+  } catch (e) {
+    return require(path.resolve(__dirname, '../app/node_modules', name));
+  }
+}
+const mysql = getModule('mysql2/promise');
 
 async function verifyDatabaseCounts() {
   console.log('=====================================================================');

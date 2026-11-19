@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { customerPool } from '@/lib/db';
+import { customerPool, adminPool } from '@/lib/db';
 import { redis } from '@/lib/redis';
 
 export async function POST(request: Request) {
@@ -9,7 +9,18 @@ export async function POST(request: Request) {
     const dropId = body.dropId || 1;
     const paymentMethod = body.paymentMethod || 'wallet';
 
-    // Call MySQL Stored Procedure within Customer Pool (Least Privilege)
+    // 1. Mandatory Hold Validation: Verify buyer holds active in-memory reservation in Redis
+    const holdKey = `hold:${dropId}:${userId}`;
+    const hasHold = await redis.exists(holdKey);
+    if (!hasHold) {
+      return NextResponse.json({
+        success: false,
+        code: 'NO_ACTIVE_HOLD',
+        message: 'Active reservation required! Please claim a 5-minute checkout hold on the drop page first.',
+      }, { status: 403 });
+    }
+
+    // 2. Call MySQL Stored Procedure within Customer Pool (Least-Privilege RBAC)
     const conn = await customerPool.getConnection();
     let output: any = null;
     try {
@@ -33,8 +44,17 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // On Successful Order Placement: Delete the temporary hold in Redis
-    await redis.del(`hold:${dropId}:${userId}`);
+    // 3. On Successful Order Placement: Delete the temporary hold in Redis
+    await redis.del(holdKey);
+
+    // 4. Reconcile Redis In-Memory Counter with MySQL Durable Source of Truth
+    const [invRows]: any = await adminPool.query(
+      'SELECT available_quantity FROM inventory WHERE drop_id = ?',
+      [dropId]
+    );
+    if (invRows && invRows.length > 0) {
+      await redis.set(`drop:${dropId}:stock`, invRows[0].available_quantity);
+    }
 
     return NextResponse.json({
       success: true,
@@ -46,4 +66,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
-
