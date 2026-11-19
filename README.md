@@ -53,8 +53,23 @@ A traditional, single-node relational database architecture suffers critical fai
 +---------------------------------------------+                       +---------------------------------------------+
 ```
 
-### Visual Relational Architecture (Crow's Foot ER Diagram)
-![FlashDrop Enterprise Crow's Foot ER Diagram](docs/er_diagram.svg)
+### Conceptual Architecture: Peter Chen ER Diagram (Component 01)
+*Formal Peter Chen ER Notation: 20 Entities | 24 Relationships | 128 Attributes (Elmasri & Navathe Textbook Standard)*
+
+![FlashDrop Conceptual ER Diagram (Peter Chen Notation)](docs/chen_er_diagram.png)
+
+> **Printable Academic Documents (Component 1)**:
+> - **A4 Sheet Printable Document**: [`docs/chen_er_diagram_printable.html`](docs/chen_er_diagram_printable.html)
+> - **High-Resolution Vector SVG**: [`docs/chen_er_diagram_white.svg`](docs/chen_er_diagram_white.svg)
+
+### Physical Relational Schema Diagram (Component 02)
+*BCNF Normalized Relational Model: 20 Tables | 152 Columns | 24 Foreign Keys*
+
+![FlashDrop Relational Schema Diagram](docs/relational_schema.png)
+
+> **Printable Academic Documents (Component 2)**:
+> - **A4 Sheet Printable Document**: [`docs/relational_schema_printable.html`](docs/relational_schema_printable.html)
+> - **High-Resolution Vector SVG**: [`docs/relational_schema_white.svg`](docs/relational_schema_white.svg)
 
 ---
 
@@ -64,7 +79,7 @@ This repository fulfills the **Experiential Learning Level 3 MiniProject Evaluat
 
 | # | Evaluation Component | Max Marks | Implementation in FlashDrop | Status |
 |---|----------------------|:---------:|-----------------------------|:------:|
-| 1 | **ER diagram** | 2 | Complete Crow's Foot ERD with cardinalities, strong/weak entities, and self-referencing relationships (`categories`, `referrals`). | Phase 1 |
+| 1 | **ER diagram** | 2 | Complete Peter Chen Conceptual ERD (20 entities, 24 relationships, 128 attributes, strong/weak entities, multivalued, derived, recursive loops). | Phase 1 |
 | 2 | **Relational schema with keys, relationships, and constraints** | 3 | Formal relational schema in 3NF/BCNF with primary, foreign, composite keys, and integrity constraints. | Phase 1 |
 | 3 | **SQL database implementation - DDL with constraints** | 4 | `sql/01_schema.sql` across 20 tables (`CHECK`, `UNIQUE`, `NOT NULL`, `DEFAULT`, `ON DELETE CASCADE/RESTRICT`). | Phase 2 |
 | 4 | **NoSQL/Vector database creation** | 4 | Redis 7 setup, key design, data structures (Counters, Hashes, Sorted Sets, Lists, Pub/Sub channels). | Phase 0 & 7 |
@@ -163,7 +178,7 @@ If running on Windows without Docker Desktop:
 ## 6. Implementation Roadmap (100% Completed & Verified Live)
 
 - [x] **Phase 0: Foundation** - Environment scaffolding, Docker Compose, Git repository, and directory structure.
-- [x] **Phase 1: Requirements & Database Modeling** - 20-entity Crow's Foot ER diagram, relational schema, Functional Dependencies, 3NF/BCNF mathematical proofs, and Redis key architecture.
+- [x] **Phase 1: Requirements & Database Modeling** - 20-entity Peter Chen ER diagram, relational schema (BCNF), Functional Dependencies, 3NF/BCNF mathematical proofs, and Redis key architecture.
 - [x] **Phase 2: Relational Core Implementation** - `01_schema.sql` (DDL with 20 tables and constraints) and `02_seed.sql` (high-volume procedural generator for 10,000+ rows).
 - [x] **Phase 3: Relational Query Library** - Joins, subqueries, recursive CTEs (hierarchical breadcrumbs & referral tree), and analytical window functions in `09_queries.sql`.
 - [x] **Phase 4: Programmable Database Engine** - Stored procedures (`sp_place_order` with pessimistic locking & rollback), triggers (double-entry ledger guard), deterministic functions, views, and scheduled events.
