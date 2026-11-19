@@ -3,7 +3,55 @@
 
 ---
 
-## 1. Relational Schema Representation (20 Tables)
+## 1. Visual Relational Schema Diagram
+
+> **Vector Schema Diagram File**: [`docs/relational_schema.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/relational_schema.svg) (Open in browser or VS Code SVG previewer)
+
+```mermaid
+erDiagram
+    roles ||--o{ users : "assigns role_id"
+    users ||--o{ addresses : "has addresses (1:N)"
+    users ||--|| wallets : "owns wallet (1:1)"
+    wallets ||--o{ wallet_ledger : "ledger entries (1:N)"
+    categories ||--o{ categories : "parent_id (Unary 1:N)"
+    categories ||--o{ products : "categorizes (1:N)"
+    products ||--o{ price_history : "price audit (1:N)"
+    products ||--o{ drops : "scheduled drop (1:N)"
+    drops ||--|| inventory : "allocated stock (1:1)"
+    drops ||--o{ orders : "ordered from drop (1:N)"
+    users ||--o{ orders : "placed by user (1:N)"
+    orders ||--|{ order_items : "contains items (Weak 1:N)"
+    products ||--o{ order_items : "product item (1:N)"
+    orders ||--|| payments : "settlement record (1:1)"
+    drops ||--o{ lottery_entries : "ballot entries (1:N)"
+    users ||--o{ lottery_entries : "participates (1:N)"
+    drops ||--o{ purchase_attempts : "telemetry log (1:N)"
+    users ||--o{ purchase_attempts : "attempts (1:N)"
+    users ||--o{ fraud_flags : "risk flags (1:N)"
+    users ||--o{ referrals : "referrer / referee (1:N)"
+    users ||--o{ user_tiers : "loyalty history (1:N)"
+    loyalty_tiers ||--o{ user_tiers : "tier classification (1:N)"
+```
+
+---
+
+## 2. ER-to-Relational Mapping Rules (Theoretical Foundation)
+
+The transformation from the conceptual ER diagram to the relational schema follows the **7 standard algorithm steps**:
+
+| Step | ER Construct | Relational Transformation in FlashDrop | Concrete Example in Schema |
+|:---:|---|---|---|
+| **1** | **Strong Entity Sets** | Create relation with all simple attributes; designated primary key becomes relation PK. | `roles`, `users`, `products`, `drops`, `loyalty_tiers` |
+| **2** | **Weak Entity Sets** | Include partial key + owner entity PK as composite foreign key with `ON DELETE CASCADE`. | `order_items` (`order_id` FK + `item_id`), `wallet_ledger` (`wallet_id` FK + `ledger_id`) |
+| **3** | **1:1 Relationships** | Include PK of one entity as foreign key in the other with `UNIQUE` constraint. | `users (1) ↔ (1) wallets` (`wallets.user_id UNIQUE FK`), `drops (1) ↔ (1) inventory` (`inventory.drop_id UNIQUE FK`) |
+| **4** | **1:N Relationships** | Include PK of "1" side as foreign key in "N" side table. | `categories (1) ↔ (N) products` (`products.category_id FK`), `users (1) ↔ (N) orders` (`orders.user_id FK`) |
+| **5** | **M:N Relationships** | Create associative bridge relation with composite PK consisting of both entities' PKs. | `users (M) ↔ (N) loyalty_tiers` resolved via `user_tiers`, `users (M) ↔ (N) drops` resolved via `lottery_entries` |
+| **6** | **Recursive (Self) Relationships** | Add foreign key in same table referencing its own primary key (nullable). | `categories.parent_id → categories.category_id`, `referrals.referrer_id → users.user_id` |
+| **7** | **Multi-Valued Attributes** | Modeled as either separate table or native MySQL 8 JSON column with queryable keys. | `products.attributes_json` (Size, Color, Edition) |
+
+---
+
+## 3. Relational Schema Representation (20 Tables)
 
 The relational schema is defined using relational algebra notation:
 `TABLE_NAME (Primary_Key_Column, Non_Key_Columns..., Foreign_Key_Column*)`
@@ -44,7 +92,7 @@ The relational schema is defined using relational algebra notation:
 
 ---
 
-## 2. Functional Dependency (FD) Analysis for Critical Tables
+## 4. Functional Dependency (FD) Analysis for Critical Tables
 
 ### Table 1: `orders`
 - **Attributes**: `{ order_id, order_number, user_id, drop_id, total_amount, discount_amount, final_amount, status, created_at }`
@@ -74,7 +122,7 @@ The relational schema is defined using relational algebra notation:
 
 ---
 
-## 3. Step-by-Step Normalization Proofs
+## 5. Step-by-Step Normalization Proofs
 
 ### Proof from 1NF to 3NF/BCNF:
 
@@ -97,7 +145,7 @@ The relational schema is defined using relational algebra notation:
 
 ---
 
-## 4. Viva Defense Questions (Component 2)
+## 6. Viva Defense Questions (Component 2)
 
 **Q1: What is the difference between 3NF and BCNF? Give an example.**
 > *Defense*: 3NF permits a dependency `X → Y` if `Y` is a prime attribute (part of a candidate key), even if `X` is not a superkey. BCNF is stricter: every determinant `X` MUST be a superkey without exception. In FlashDrop, all tables have single-attribute surrogate keys or unique candidate keys, so every determinant is a superkey, ensuring full BCNF compliance.
