@@ -68,12 +68,35 @@ Total Entities: **20 Relational Entities** in Third Normal Form (3NF) / Boyce-Co
 
 ---
 
-## 4. Crow's Foot Entity-Relationship Diagram
+## 4. Conceptual Entity-Relationship Diagram (Peter Chen Notation)
 
-### Pictorial Architecture Diagram (20 Normalized Relational Tables)
-![FlashDrop Crow's Foot ER Diagram](docs/er_diagram.svg)
+### Formal Textbook ER Architecture (20 Entities | 24 Relationships | 128 Attributes)
 
-### Mermaid Structural Diagram
+![FlashDrop Conceptual ER Diagram (Peter Chen Notation)](docs/chen_er_diagram.png)
+
+> **High-Resolution Vector / Printable Documents**:
+> - **A4 Sheet Printable Document**: [`docs/chen_er_diagram_printable.html`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/chen_er_diagram_printable.html) (Pure white background, 3-page academic report)
+> - **High-Resolution Vector SVG**: [`docs/chen_er_diagram_white.svg`](file:///C:/Users/Admin/.gemini/antigravity/scratch/flashdrop/docs/chen_er_diagram_white.svg)
+
+### Peter Chen Notation Semantic Mapping (Elmasri & Navathe Formalism)
+
+| Chen Notation Symbol | Geometric Shape | FlashDrop Implementation & Semantic Role |
+| :--- | :--- | :--- |
+| **Strong Entity** | Single Rectangle | `USERS`, `PRODUCTS`, `DROPS`, `ORDERS`, `WALLETS`, `CATEGORIES`, `ROLES`, `ADDRESSES`, `LOYALTY_TIERS` |
+| **Weak Entity** | Double Rectangle | `ORDER_ITEMS` (existence-dependent on `ORDERS`), `WALLET_LEDGER` (existence-dependent on `WALLETS`) |
+| **Relationship** | Single Diamond | `PLACES`, `OWNS`, `FEATURES`, `ALLOCATES`, `HAS_PRICE`, `PAID_VIA`, `CLASSIFIES`, `ASSIGNS` |
+| **Identifying Rel.** | Double Diamond | `CONTAINS` (identifying parent `ORDERS` to `ORDER_ITEMS`), `RECORDS` (identifying `WALLETS` to `WALLET_LEDGER`) |
+| **Primary Key** | Oval (Underlined Text) | <u>`user_id`</u>, <u>`product_id`</u>, <u>`drop_id`</u>, <u>`order_id`</u>, <u>`wallet_id`</u>, <u>`category_id`</u> |
+| **Partial Key** | Oval (Dashed Underline) | `item_id` (in `ORDER_ITEMS`), `ledger_id` (in `WALLET_LEDGER`) |
+| **Multivalued Attribute**| Double Oval | `attributes_json` in `PRODUCTS` (holds set of dynamic specs: size, color, edition) |
+| **Derived Attribute** | Dashed Oval | `available_quantity` in `INVENTORY` ($= \text{total} - \text{sold} - \text{reserved}$); `balance` in `WALLETS` |
+| **Composite Attribute** | Branching Ovals | `Name` &rarr; (`first_name`, `last_name`); `Address_Info` &rarr; (`city`, `state`, `postal_code`) |
+| **Total Participation** | Double Line | Mandatory 1:1 `USERS` &rarr; `WALLETS`; Weak entity `ORDER_ITEMS` &rarr; `ORDERS`; `DROPS` &rarr; `INVENTORY` |
+| **Partial Participation**| Single Line | `USERS` &rarr; `ORDERS` (user may register without purchasing); `PRODUCTS` &rarr; `DROPS` |
+| **Cardinality Ratios** | $1 : N$, $1 : 1$, $M : N$ | Labeled on connecting lines across all 24 relationships |
+| **Recursive Roles** | Self-loop with Role Names| `PARENT_OF` on `CATEGORIES` (*Parent (1)* / *Child (N)*); `REFERRER` / `REFEREE` on `REFERRALS` |
+
+### Structural Relationship Flow
 
 ```mermaid
 erDiagram
