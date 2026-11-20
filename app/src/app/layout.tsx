@@ -1,5 +1,6 @@
 import './globals.css';
 import Navbar from '@/components/Navbar';
+import FlashDropAiChat from '@/components/FlashDropAiChat';
 
 export const metadata = {
   title: 'FlashDrop ⚡ High-Concurrency Limited Commerce',
@@ -13,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col">
+      <body className="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col relative">
         {/* Dynamic RBAC Global Navigation Bar */}
         <Navbar />
 
@@ -28,6 +29,9 @@ export default function RootLayout({
             FlashDrop ⚡ Polyglot Persistence Architecture (MySQL 8.0 + Redis 7.2) | PES University DBMS Level 3 MiniProject
           </p>
         </footer>
+
+        {/* Role-Aware Floating AI Assistant (Fixed at bottom-right across all pages) */}
+        <FlashDropAiChat />
       </body>
     </html>
   );
