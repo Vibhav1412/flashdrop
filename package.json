@@ -7,7 +7,9 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "functions": "node scripts/backend_functions_menu.js",
+    "monitor": "node scripts/live_monitor.js"
   },
   "repository": {
     "type": "git",

@@ -72,6 +72,10 @@ export default function Navbar() {
             <Link href="/" className="text-zinc-300 hover:text-white transition">Live Drops</Link>
             <Link href="/wallet" className="text-zinc-300 hover:text-white transition">Wallet &amp; Ledger</Link>
             <Link href="/referrals" className="text-zinc-300 hover:text-white transition">Referrals</Link>
+            <Link href="/admin/functions" className="text-rose-400 hover:text-rose-300 transition flex items-center space-x-1 font-semibold">
+              <span>⚡</span>
+              <span>Backend Functions</span>
+            </Link>
           </nav>
         </div>
 
@@ -84,6 +88,13 @@ export default function Navbar() {
                 className="text-xs font-semibold px-2.5 py-1.5 rounded-md bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700 transition"
               >
                 SQL Console
+              </Link>
+              <Link
+                href="/admin/functions"
+                className="text-xs font-bold px-2.5 py-1.5 rounded-md bg-rose-600/20 text-rose-400 border border-rose-500/30 hover:bg-rose-600/30 transition flex items-center space-x-1"
+              >
+                <span>⚡</span>
+                <span>Functions</span>
               </Link>
               <Link
                 href="/admin/dashboard"
