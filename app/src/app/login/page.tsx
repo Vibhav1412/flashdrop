@@ -65,38 +65,122 @@ export default function LoginPage() {
       )}
 
       {/* Quick Role Selection for Evaluators / Viva Demo */}
-      <div className="space-y-2.5 pt-2">
-        <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider block font-semibold">
-          ⚡ 1-Click Role Switcher (Evaluation Demo):
-        </span>
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={() => handleLogin('user_2@flashdrop.com', 'customer123')}
-            disabled={loading}
-            className="p-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-left transition group"
-          >
-            <div className="flex items-center space-x-1.5 text-emerald-400 text-xs font-bold font-mono">
-              <span>👤</span>
-              <span>Customer</span>
-            </div>
-            <div className="text-[10px] text-zinc-400 mt-1 truncate">user_2@flashdrop.com</div>
-            <div className="text-[9px] text-zinc-500 font-mono mt-0.5">Least-privilege role</div>
-          </button>
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-semibold">
+            ⚡ 1-Click Evaluation Accounts:
+          </span>
+          <span className="text-[10px] text-zinc-500 font-mono">5 Customers + 1 Admin</span>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => handleLogin('admin@flashdrop.com', 'admin123')}
-            disabled={loading}
-            className="p-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 border border-rose-500/30 text-left transition group"
-          >
-            <div className="flex items-center space-x-1.5 text-rose-400 text-xs font-bold font-mono">
-              <span>🛡️</span>
-              <span>Admin</span>
+        {/* Administrator Account */}
+        <button
+          type="button"
+          onClick={() => handleLogin('admin@flashdrop.com', 'admin123')}
+          disabled={loading}
+          className="w-full p-3 rounded-2xl bg-zinc-900/90 hover:bg-zinc-800 border border-rose-500/40 text-left transition group shadow-lg hover:border-rose-500"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-rose-400 text-xs font-bold font-mono">
+              <span className="text-base">🛡️</span>
+              <span>Administrator (DBA)</span>
             </div>
-            <div className="text-[10px] text-zinc-400 mt-1 truncate">admin@flashdrop.com</div>
-            <div className="text-[9px] text-zinc-500 font-mono mt-0.5">Full DBA telemetry</div>
-          </button>
+            <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+              Full Privileges
+            </span>
+          </div>
+          <div className="text-[11px] text-zinc-300 font-mono mt-1">admin@flashdrop.com</div>
+          <div className="text-[10px] text-zinc-500 font-sans mt-0.5">
+            Cross-table schema analytics, bot telemetry, SQL Sandbox &amp; inventory controls
+          </div>
+        </button>
+
+        {/* 5 Distinct Customer Accounts */}
+        <div className="space-y-2 pt-1">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+            👤 Select Customer Persona (Isolated Wallets &amp; AI Chats):
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Customer 1 */}
+            <button
+              type="button"
+              onClick={() => handleLogin('user_2@flashdrop.com', 'customer123')}
+              disabled={loading}
+              className="p-2.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 hover:border-emerald-500/50 text-left transition group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-400 text-xs font-bold font-mono">Customer 1</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-300">$376.00</span>
+              </div>
+              <div className="text-[11px] text-zinc-300 font-mono mt-0.5">Buyer2</div>
+              <div className="text-[9px] text-zinc-500 font-mono mt-0.5">2 Orders • Platinum Tier</div>
+            </button>
+
+            {/* Customer 2 */}
+            <button
+              type="button"
+              onClick={() => handleLogin('user_3@flashdrop.com', 'customer123')}
+              disabled={loading}
+              className="p-2.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 hover:border-emerald-500/50 text-left transition group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-400 text-xs font-bold font-mono">Customer 2</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-300">$820.50</span>
+              </div>
+              <div className="text-[11px] text-zinc-300 font-mono mt-0.5">Buyer3</div>
+              <div className="text-[9px] text-zinc-500 font-mono mt-0.5">1 Order • Gold Tier</div>
+            </button>
+
+            {/* Customer 3 */}
+            <button
+              type="button"
+              onClick={() => handleLogin('user_4@flashdrop.com', 'customer123')}
+              disabled={loading}
+              className="p-2.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 hover:border-emerald-500/50 text-left transition group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-400 text-xs font-bold font-mono">Customer 3</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-300">$145.00</span>
+              </div>
+              <div className="text-[11px] text-zinc-300 font-mono mt-0.5">Buyer4</div>
+              <div className="text-[9px] text-zinc-500 font-mono mt-0.5">2 Orders • Silver Tier</div>
+            </button>
+
+            {/* Customer 4 */}
+            <button
+              type="button"
+              onClick={() => handleLogin('user_5@flashdrop.com', 'customer123')}
+              disabled={loading}
+              className="p-2.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 hover:border-emerald-500/50 text-left transition group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-400 text-xs font-bold font-mono">Customer 4</span>
+                <span className="text-[10px] font-mono font-bold text-emerald-300">$1,250.00</span>
+              </div>
+              <div className="text-[11px] text-zinc-300 font-mono mt-0.5">Buyer5 (VIP)</div>
+              <div className="text-[9px] text-zinc-500 font-mono mt-0.5">High Roller • 0 Orders</div>
+            </button>
+
+            {/* Customer 5 */}
+            <button
+              type="button"
+              onClick={() => handleLogin('user_6@flashdrop.com', 'customer123')}
+              disabled={loading}
+              className="p-2.5 rounded-xl bg-zinc-800/70 hover:bg-zinc-700/80 border border-zinc-700/60 hover:border-emerald-500/50 text-left transition group sm:col-span-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-emerald-400 text-xs font-bold font-mono">Customer 5</span>
+                  <span className="text-[11px] text-zinc-300 font-mono">(Buyer6)</span>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-emerald-300">$55.00</span>
+              </div>
+              <div className="text-[9px] text-zinc-500 font-mono mt-0.5">
+                Low Balance Budget Shopper • 1 Order • Bronze Tier
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
