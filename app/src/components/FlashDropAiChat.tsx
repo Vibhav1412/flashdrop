@@ -1,0 +1,447 @@
+'use client';
+
+// =====================================================================
+// FLASHDROP: app/src/components/FlashDropAiChat.tsx
+// Role-Aware Floating AI Assistant (Customer Concierge + Admin Intelligence)
+// Pinned globally to bottom-right across all pages
+// =====================================================================
+
+import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import {
+  Bot,
+  X,
+  Send,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Database,
+  ShieldCheck,
+  User,
+  ShoppingBag,
+  ExternalLink,
+  Minimize2,
+  Maximize2,
+  Zap,
+} from 'lucide-react';
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'assistant';
+  text: string;
+  sql?: string;
+  explanation?: string;
+  rows?: any[];
+  columns?: string[];
+  durationMs?: number;
+  timestamp: string;
+  suggestedQuestions?: string[];
+}
+
+export default function FlashDropAiChat() {
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [expandedSqlId, setExpandedSqlId] = useState<string | null>(null);
+
+  const [user, setUser] = useState<{ userId: number; email: string; role: string; name: string } | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  const [inputPrompt, setInputPrompt] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 1. Fetch current user role and session on mount & navigation
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+        setLoadingUser(false);
+      })
+      .catch(() => setLoadingUser(false));
+  }, [pathname]);
+
+  // 2. Initialize default welcome message based on role
+  useEffect(() => {
+    if (loadingUser) return;
+
+    const isAdmin = user?.role === 'admin';
+    const welcomeId = 'welcome-msg';
+
+    if (messages.length === 0) {
+      if (isAdmin) {
+        setMessages([
+          {
+            id: welcomeId,
+            sender: 'assistant',
+            text: `Welcome, Administrator **${user?.name || 'Admin'}**! I am your **FlashDrop Executive Intelligence** assistant. You have full analytical visibility over our MySQL 8.0 relational schema, inventory conservation metrics, bot security flags, and platform GMV.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            suggestedQuestions: [
+              'Who are our top 3 buyers by total spending?',
+              'Which drop sold out the fastest?',
+              'Check inventory conservation across all drops',
+              'Show high-risk bot attack IPs and suspensions',
+              'Show total platform revenue and paid orders',
+            ],
+          },
+        ]);
+      } else {
+        const customerName = user ? user.name.split(' ')[0] : 'Shopper';
+        setMessages([
+          {
+            id: welcomeId,
+            sender: 'assistant',
+            text: `Hi **${customerName}**! I'm your **FlashDrop Shopper Concierge**. How can I help you today with your orders, wallet balance, active drop reservations, or referral points?`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            suggestedQuestions: [
+              'What is my wallet balance & recent transactions?',
+              'What orders have I placed so far?',
+              'Am I in any waiting room queue or hold?',
+              'Which drops are live right now?',
+              'Show my referral reward points',
+            ],
+          },
+        ]);
+      }
+    }
+  }, [user, loadingUser]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen, isMinimized]);
+
+  const handleSend = async (overridePrompt?: string) => {
+    const query = (overridePrompt || inputPrompt).trim();
+    if (!query || isSubmitting) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputPrompt('');
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: query }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const assistantMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          text: data.message,
+          sql: data.sql,
+          explanation: data.explanation,
+          rows: data.rows,
+          columns: data.columns,
+          durationMs: data.durationMs,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedQuestions: data.suggestedQuestions,
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+      } else {
+        const errorMsg: ChatMessage = {
+          id: `error-${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ Error: ${data.error || 'Failed to process request.'}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      }
+    } catch (err: any) {
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        sender: 'assistant',
+        text: `⚠️ Network Error: ${err.message}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isAdmin = user?.role === 'admin';
+
+  return (
+    <>
+      {/* ----------------------------------------------------------------- */}
+      {/* Floating Action Button (Always fixed at bottom-right)             */}
+      {/* ----------------------------------------------------------------- */}
+      {!isOpen && (
+        <button
+          onClick={() => {
+            setIsOpen(true);
+            setIsMinimized(false);
+          }}
+          className={`fixed bottom-6 right-6 z-50 flex items-center space-x-2.5 px-4 py-3 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 border backdrop-blur-md ${
+            isAdmin
+              ? 'bg-rose-950/90 hover:bg-rose-900 border-rose-500/50 text-white shadow-rose-950/50'
+              : 'bg-zinc-900/90 hover:bg-zinc-800 border-rose-500/40 text-white shadow-black/80'
+          }`}
+        >
+          <div className="relative">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+              isAdmin ? 'bg-rose-600 text-white' : 'bg-gradient-to-tr from-rose-500 to-amber-500 text-white'
+            }`}>
+              {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+            </div>
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                isAdmin ? 'bg-rose-400' : 'bg-emerald-400'
+              }`}></span>
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                isAdmin ? 'bg-rose-500' : 'bg-emerald-500'
+              }`}></span>
+            </span>
+          </div>
+
+          <div className="text-left font-sans">
+            <div className="text-xs font-bold leading-tight flex items-center space-x-1">
+              <span>{isAdmin ? 'FlashDrop Admin AI' : 'FlashDrop AI'}</span>
+            </div>
+            <div className="text-[10px] text-zinc-400 leading-tight">
+              {isAdmin ? 'Executive SQL Intelligence' : 'Shopper Concierge'}
+            </div>
+          </div>
+        </button>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Floating Chat Modal / Drawer                                      */}
+      {/* ----------------------------------------------------------------- */}
+      {isOpen && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-200 overflow-hidden ${
+            isMinimized ? 'h-14' : 'h-[580px] max-h-[82vh]'
+          } ${
+            isAdmin
+              ? 'bg-zinc-950/95 border-rose-600/40 shadow-rose-950/40'
+              : 'bg-zinc-950/95 border-zinc-800 shadow-2xl'
+          }`}
+        >
+          {/* Header */}
+          <div
+            className={`px-4 py-3 border-b flex items-center justify-between cursor-pointer select-none ${
+              isAdmin
+                ? 'bg-rose-950/40 border-rose-900/50'
+                : 'bg-zinc-900/80 border-zinc-800'
+            }`}
+            onClick={() => setIsMinimized(!isMinimized)}
+          >
+            <div className="flex items-center space-x-2.5">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
+                isAdmin ? 'bg-rose-600 text-white' : 'bg-rose-500 text-white'
+              }`}>
+                {isAdmin ? <ShieldCheck className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+              </div>
+              <div>
+                <div className="text-xs font-bold text-white flex items-center space-x-1.5">
+                  <span>{isAdmin ? 'FlashDrop Executive AI' : 'FlashDrop Concierge'}</span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono uppercase ${
+                    isAdmin ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  }`}>
+                    {isAdmin ? 'Admin' : 'Customer'}
+                  </span>
+                </div>
+                <div className="text-[10px] text-zinc-400 font-mono flex items-center space-x-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>MySQL 8.0 + Redis 7.2 Active</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="p-1 text-zinc-400 hover:text-white rounded hover:bg-zinc-800/60 transition"
+                title={isMinimized ? 'Expand' : 'Minimize'}
+              >
+                {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1 text-zinc-400 hover:text-white rounded hover:bg-zinc-800/60 transition"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Area (Hidden if Minimized) */}
+          {!isMinimized && (
+            <div className="flex-1 flex flex-col min-h-0 bg-zinc-950">
+              {/* Message History */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 font-sans text-xs">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+                        msg.sender === 'user'
+                          ? 'bg-rose-600 text-white font-medium rounded-br-sm'
+                          : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-bl-sm'
+                      }`}
+                    >
+                      {/* Markdown-style formatting */}
+                      <p className="whitespace-pre-wrap">{msg.text.replace(/\*\*(.*?)\*\*/g, '$1')}</p>
+
+                      {/* Dynamic Miniature Data Table (if data rows exist) */}
+                      {msg.rows && msg.rows.length > 0 && msg.columns && (
+                        <div className="mt-2.5 pt-2 border-t border-zinc-800/80">
+                          <div className="max-h-36 overflow-x-auto overflow-y-auto rounded border border-zinc-800 bg-zinc-950/80">
+                            <table className="w-full text-[10px] font-mono text-left">
+                              <thead className="bg-zinc-900 text-zinc-400 sticky top-0 border-b border-zinc-800">
+                                <tr>
+                                  {msg.columns.map((col) => (
+                                    <th key={col} className="px-2 py-1 uppercase">{col}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-800/50">
+                                {msg.rows.map((row, rIdx) => (
+                                  <tr key={rIdx} className="hover:bg-zinc-900/50">
+                                    {msg.columns!.map((col) => (
+                                      <td key={col} className="px-2 py-1 text-zinc-300 whitespace-nowrap">
+                                        {row[col] !== undefined && row[col] !== null ? String(row[col]) : '-'}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Collapsible Underlying SQL Badge (Crucial for DBMS Viva Defense!) */}
+                      {msg.sql && (
+                        <div className="mt-2 pt-2 border-t border-zinc-800/80 font-mono">
+                          <button
+                            onClick={() =>
+                              setExpandedSqlId(expandedSqlId === msg.id ? null : msg.id)
+                            }
+                            className="flex items-center space-x-1 text-[10px] text-zinc-400 hover:text-rose-400 transition"
+                          >
+                            <Database className="w-3 h-3 text-rose-500" />
+                            <span>
+                              {expandedSqlId === msg.id ? 'Hide MySQL Query' : 'View Generated MySQL 8 Query'}
+                            </span>
+                            {expandedSqlId === msg.id ? (
+                              <ChevronUp className="w-3 h-3" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3" />
+                            )}
+                          </button>
+
+                          {expandedSqlId === msg.id && (
+                            <div className="mt-1.5 p-2 rounded bg-black/80 border border-zinc-800 text-[10px] overflow-x-auto text-emerald-400">
+                              <pre>{msg.sql}</pre>
+                              {msg.durationMs !== undefined && (
+                                <div className="mt-1 text-[9px] text-zinc-500 font-sans">
+                                  ⚡ Execution Latency: {msg.durationMs} ms
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <span className="text-[9px] text-zinc-500 mt-1 px-1 font-mono">
+                      {msg.timestamp}
+                    </span>
+
+                    {/* Quick Follow-up Question Chips */}
+                    {msg.sender === 'assistant' && msg.suggestedQuestions && (
+                      <div className="flex flex-wrap gap-1 mt-2 max-w-[95%]">
+                        {msg.suggestedQuestions.map((q, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSend(q)}
+                            className="text-[10px] px-2 py-1 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 transition text-left"
+                          >
+                            💬 {q}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isSubmitting && (
+                  <div className="flex items-center space-x-2 text-zinc-400 text-xs py-2">
+                    <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
+                    <span>Querying database engine...</span>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Input Area */}
+              <div className="p-3 border-t border-zinc-800 bg-zinc-900/60">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSend();
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <input
+                    type="text"
+                    value={inputPrompt}
+                    onChange={(e) => setInputPrompt(e.target.value)}
+                    placeholder={
+                      isAdmin
+                        ? 'Ask an admin question (e.g. top buyers, GMV)...'
+                        : 'Ask about your wallet, orders, or live drops...'
+                    }
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-rose-500/80 transition"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!inputPrompt.trim() || isSubmitting}
+                    className="p-2 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white transition flex items-center justify-center"
+                    title="Send"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+
+                <div className="mt-2 text-[9px] text-zinc-500 font-mono text-center flex items-center justify-center space-x-2">
+                  <span>🔒 Protected by AST Read-Only Shield</span>
+                  <span>•</span>
+                  <span>Role: {user ? user.role.toUpperCase() : 'GUEST'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
