@@ -205,9 +205,13 @@ node loadtest/run_chaos_benchmark.js
 # 3. Run the Fault Tolerance & Hardening Suite (Phase 10)
 node test/hardening_suite.js
 
-# 4. Launch the Web Application (Components 10 & 11)
+# 4. Launch the Real-Time Dual-Engine Terminal Mission Control
+.\run_live_monitor.bat
+
+# 5. Launch the Web Application (Components 10 & 11)
 cd app
 npm run dev
 # Open http://localhost:3000 in your browser!
+# Navigate to http://localhost:3000/admin/queries for "FlashDrop AI" Natural Language Querying!
 ```
 
