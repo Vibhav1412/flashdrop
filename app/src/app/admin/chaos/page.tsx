@@ -181,10 +181,6 @@ export default function ChaosModeControlPage() {
                   <span className="text-rose-400 font-bold">{simResults.unprotected.elapsedMs} ms</span>
                 </div>
               </div>
-
-              <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-900/40 text-[11px] text-rose-300 leading-relaxed">
-                ⚠️ <strong>Viva Explanation:</strong> While MySQL's table-level check constraint (<code className="text-rose-300">chk_inventory_avail_nonneg</code>) successfully prevented negative inventory, all 500 concurrent buyers competed for a single row lock on disk. This caused connection pool exhaustion and pushed p95 latency up to <strong>{simResults.unprotected.p95LatencyMs}ms</strong> with low throughput ({simResults.unprotected.throughputRps} req/s).
-              </div>
             </div>
 
             {/* Path B: Redis-Protected Layer Card */}
@@ -226,10 +222,6 @@ export default function ChaosModeControlPage() {
                   <span className="text-zinc-400">Database CPU / Disk I/O:</span>
                   <span className="text-emerald-400 font-bold">Low (0 Disk Reads, 100% Absorbed in RAM)</span>
                 </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/40 text-[11px] text-emerald-300 leading-relaxed">
-                ✅ <strong>Viva Explanation:</strong> Redis executes the atomic Lua script (<code className="text-emerald-300">acquire_hold.lua</code>) in a single-threaded event loop in RAM. Exactly 50 holds were granted in <strong>{simResults.protected.p95LatencyMs}ms</strong> at <strong>{simResults.protected.throughputRps} req/s</strong>, and the 450 excess buyers were turned away instantly without touching MySQL disk!
               </div>
             </div>
           </div>
