@@ -470,6 +470,14 @@ export default function FlashDropAiChat() {
                 >
                   👤 Cust 5 ($55)
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('eval_professor@pes.edu', 'customer123')}
+                  className="col-span-2 p-1.5 rounded bg-zinc-950 border border-amber-500/40 text-left hover:bg-zinc-800 text-[11px] text-amber-300 font-mono flex items-center justify-between"
+                >
+                  <span>🎓 Professor Examiner (New DB User)</span>
+                  <span className="font-bold text-amber-400">$1,500</span>
+                </button>
               </div>
             </div>
           )}

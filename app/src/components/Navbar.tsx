@@ -251,6 +251,26 @@ export default function Navbar() {
                       </div>
                       <span className="text-[10px] font-mono font-bold text-emerald-400">$55.00</span>
                     </button>
+
+                    <div className="border-t border-zinc-800 my-1"></div>
+
+                    {/* Live Evaluator / Professor Account */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('eval_professor@pes.edu', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'eval_professor@pes.edu' ? 'bg-amber-950/60 text-amber-300 font-bold border border-amber-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>🎓</span>
+                        <div>
+                          <div className="text-xs text-amber-300 font-bold">Professor Examiner</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">Live DB Insert • Platinum</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-amber-400">$1,500.00</span>
+                    </button>
                   </div>
                 )}
 
