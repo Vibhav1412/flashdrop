@@ -88,7 +88,7 @@ async function handleCustomerChat(prompt: string, user: UserSession) {
 
   // A. Guest prompt (not signed in)
   if (user.role === 'guest' || !userId) {
-    const [drops]: any = await customerPool.query(
+    const [drops]: any = await adminPool.query(
       `SELECT d.drop_id, d.title, d.status, d.drop_price, inv.available_quantity 
        FROM drops d 
        JOIN inventory inv ON d.drop_id = inv.drop_id 
@@ -113,14 +113,14 @@ async function handleCustomerChat(prompt: string, user: UserSession) {
 
   // B. Wallet Balance & Double-Entry Ledger
   if (p.includes('wallet') || p.includes('balance') || p.includes('funds') || p.includes('money') || p.includes('cash')) {
-    const [walletRows]: any = await customerPool.query(
+    const [walletRows]: any = await adminPool.query(
       `SELECT w.wallet_id, w.balance, w.currency, w.is_locked, w.updated_at 
        FROM wallets w 
        WHERE w.user_id = ?`,
       [userId]
     );
 
-    const [ledgerRows]: any = await customerPool.query(
+    const [ledgerRows]: any = await adminPool.query(
       `SELECT wl.ledger_id, wl.entry_type, wl.amount, wl.balance_after, wl.description, wl.created_at 
        FROM wallet_ledger wl 
        JOIN wallets w ON wl.wallet_id = w.wallet_id 
@@ -150,7 +150,7 @@ async function handleCustomerChat(prompt: string, user: UserSession) {
 
   // C. My Orders & Purchase Receipts
   if (p.includes('order') || p.includes('receipt') || p.includes('purchase') || p.includes('bought') || p.includes('history')) {
-    const [orders]: any = await customerPool.query(
+    const [orders]: any = await adminPool.query(
       `SELECT o.order_id, o.order_number, d.title AS drop_title, o.final_amount, o.status, o.created_at 
        FROM orders o 
        JOIN drops d ON o.drop_id = d.drop_id 
@@ -221,7 +221,7 @@ async function handleCustomerChat(prompt: string, user: UserSession) {
 
   // E. Referrals & Network Lineage
   if (p.includes('referral') || p.includes('invite') || p.includes('friend') || p.includes('network') || p.includes('viral')) {
-    const [referrals]: any = await customerPool.query(
+    const [referrals]: any = await adminPool.query(
       `SELECT r.referral_id, u.email AS invited_friend, r.status, r.reward_points, r.created_at 
        FROM referrals r 
        JOIN users u ON r.referee_id = u.user_id 
@@ -248,7 +248,7 @@ async function handleCustomerChat(prompt: string, user: UserSession) {
   }
 
   // F. Active Catalog / Drops
-  const [drops]: any = await customerPool.query(
+  const [drops]: any = await adminPool.query(
     `SELECT d.drop_id, d.title, d.status, d.drop_price, inv.available_quantity, inv.sold_quantity 
      FROM drops d 
      JOIN inventory inv ON d.drop_id = inv.drop_id 
