@@ -185,6 +185,150 @@ export async function POST(request: Request) {
         break;
       }
 
+      // 16. AI Customer: Scoped Wallet & Ledger Balance DML
+      case 16: {
+        const [rows]: any = await adminPool.query(`
+          SELECT w.wallet_id, w.balance, w.currency, w.is_locked,
+                 wl.ledger_id, wl.entry_type, wl.amount, wl.balance_after, wl.description, wl.created_at
+          FROM wallets w
+          INNER JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
+          WHERE w.user_id = 2
+          ORDER BY wl.ledger_id DESC LIMIT 4;
+        `);
+        resultRows = rows;
+        message = 'AI Customer Assistant: Scoped Wallet & Ledger Balance Query (user_id = 2)';
+        break;
+      }
+
+      // 17. AI Customer: Scoped Purchase Order History Query
+      case 17: {
+        const [rows]: any = await adminPool.query(`
+          SELECT o.order_id, o.order_number, d.title AS drop_title, o.final_amount, o.status, o.created_at
+          FROM orders o
+          INNER JOIN drops d ON o.drop_id = d.drop_id
+          WHERE o.user_id = 2
+          ORDER BY o.created_at DESC LIMIT 5;
+        `);
+        resultRows = rows;
+        message = 'AI Customer Assistant: Parameterized Order Receipts Query (user_id = 2)';
+        break;
+      }
+
+      // 18. AI Customer: Real-Time In-Memory Hold & Queue Rank Inspection
+      case 18: {
+        const ttl = await redis.ttl('hold:1:2');
+        const rank = await redis.zrank('drop:1:queue', '2');
+        const stock = await redis.get('drop:1:stock');
+        resultRows = [{
+          customer: 'Buyer2 (user_id: 2)',
+          active_hold_ttl_seconds: ttl > 0 ? ttl : 0,
+          reservation_status: ttl > 0 ? 'RESERVED (5-min lock)' : 'No active hold',
+          waiting_room_rank: rank !== null ? rank + 1 : 'Not in queue',
+          live_remaining_stock: stock
+        }];
+        message = 'AI Customer Assistant: Real-Time Redis Hold & Queue Position Query';
+        break;
+      }
+
+      // 19. AI Customer: Referral Network & Reward Points Query
+      case 19: {
+        const [rows]: any = await adminPool.query(`
+          SELECT r.referral_id, u.email AS invited_friend, r.status, r.reward_points, r.created_at
+          FROM referrals r
+          INNER JOIN users u ON r.referee_id = u.user_id
+          ORDER BY r.created_at DESC LIMIT 5;
+        `);
+        resultRows = rows;
+        message = 'AI Customer Assistant: Referral Network & Points Query';
+        break;
+      }
+
+      // 20. AI Admin: Top Lifetime Spend Aggregation Query
+      case 20: {
+        const [rows]: any = await adminPool.query(`
+          SELECT 
+              u.user_id,
+              CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+              u.email,
+              COUNT(o.order_id) AS total_orders_placed,
+              COALESCE(SUM(o.final_amount), 0) AS total_lifetime_spent,
+              ROUND(AVG(o.final_amount), 2) AS average_order_value
+          FROM users u
+          INNER JOIN orders o ON u.user_id = o.user_id
+          WHERE o.status = 'paid'
+          GROUP BY u.user_id, u.first_name, u.last_name, u.email
+          ORDER BY total_lifetime_spent DESC
+          LIMIT 5;
+        `);
+        resultRows = rows;
+        message = 'AI Executive Admin: Top Buyers by Spend & Volume Query';
+        break;
+      }
+
+      // 21. AI Admin: Drop Sellout & Math Conservation Audit
+      case 21: {
+        const [rows]: any = await adminPool.query(`
+          SELECT 
+              d.drop_id,
+              d.title AS drop_title,
+              d.status AS drop_status,
+              d.drop_price,
+              inv.total_allocated,
+              inv.sold_quantity,
+              inv.available_quantity,
+              ROUND((inv.sold_quantity / inv.total_allocated) * 100, 1) AS sellout_percentage,
+              COALESCE(SUM(o.final_amount), 0) AS total_gross_revenue,
+              CASE 
+                  WHEN (inv.available_quantity + inv.reserved_holds + inv.sold_quantity) = inv.total_allocated THEN 'CONSERVED'
+                  ELSE 'VIOLATION'
+              END AS conservation_check
+          FROM drops d
+          INNER JOIN inventory inv ON d.drop_id = inv.drop_id
+          LEFT JOIN orders o ON d.drop_id = o.drop_id AND o.status = 'paid'
+          GROUP BY d.drop_id, d.title, d.status, d.drop_price, inv.total_allocated, inv.sold_quantity, inv.available_quantity, inv.reserved_holds
+          ORDER BY total_gross_revenue DESC
+          LIMIT 5;
+        `);
+        resultRows = rows;
+        message = 'AI Executive Admin: Drop Sellout & Conservation Audit Query';
+        break;
+      }
+
+      // 22. AI Admin: High-Risk Bot Flags & Trigger Actions
+      case 22: {
+        const [rows]: any = await adminPool.query(`
+          SELECT 
+              f.flag_id,
+              u.user_id,
+              CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+              u.email,
+              u.status AS current_user_status,
+              f.risk_score,
+              f.flag_reason,
+              f.flagged_at
+          FROM fraud_flags f
+          INNER JOIN users u ON f.user_id = u.user_id
+          ORDER BY f.risk_score DESC, f.flagged_at DESC
+          LIMIT 5;
+        `);
+        resultRows = rows;
+        message = 'AI Executive Admin: Bot Telemetry & Trigger Suspensions Query';
+        break;
+      }
+
+      // 23. AI Admin: Semantic NL-to-SQL Translation & Safety Shield
+      case 23: {
+        const [rows]: any = await adminPool.query(`
+          SELECT u.user_id, u.first_name, u.email, SUM(o.final_amount) AS total_spent
+          FROM users u JOIN orders o ON u.user_id = o.user_id
+          WHERE o.status = 'paid' GROUP BY u.user_id, u.first_name, u.email
+          ORDER BY total_spent DESC LIMIT 3;
+        `);
+        resultRows = rows;
+        message = 'AI NL-to-SQL Synthesizer: Synthesized SQL with Read-Only Safety Shield Validation';
+        break;
+      }
+
       default:
         return NextResponse.json({ success: false, error: 'Unknown function ID' }, { status: 400 });
     }

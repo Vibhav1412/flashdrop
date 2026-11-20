@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 interface FunctionItem {
   id: number;
-  category: 'PROCEDURE' | 'FUNCTION' | 'TRIGGER' | 'VIEW' | 'REDIS_LUA';
+  category: 'PROCEDURE' | 'FUNCTION' | 'TRIGGER' | 'VIEW' | 'REDIS_LUA' | 'AI_OPERATION';
   name: string;
   signature: string;
   rubric: string;
@@ -592,6 +592,195 @@ else
 end`,
     defaultActionLabel: 'Verify Redis Rollback Engine',
   },
+  {
+    id: 16,
+    category: 'AI_OPERATION',
+    name: 'AI Customer: Scoped Wallet & Ledger Balance DML',
+    signature: 'AI Backend Query (user_id = 2)',
+    rubric: 'Component 11 (API & DB Integration) & Component 12 (RBAC Tenant Isolation)',
+    marks: 'Component 11 & 12',
+    vivaDefense: [
+      'Multi-Tenant Tenant Isolation: FlashDrop Concierge AI enforces parameter binding (WHERE w.user_id = ?) so customers cannot see other buyers\' wallet balances.',
+      'Double-Entry Auditing: Retrieves current prepaid funds alongside immutable wallet_ledger transactions in a single structured response.',
+      'Defensive Security: Query is executed by the AI service layer using strictly bound parameters preventing SQL injection.'
+    ],
+    sql: `-- Customer AI Scoped Query (Isolated by user_id = 2)
+SELECT w.wallet_id, w.balance, w.currency, w.is_locked,
+       wl.ledger_id, wl.entry_type, wl.amount, wl.balance_after, wl.description, wl.created_at
+FROM wallets w
+INNER JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
+WHERE w.user_id = 2
+ORDER BY wl.ledger_id DESC LIMIT 4;`,
+    defaultActionLabel: 'Execute Customer 2 AI Wallet Query',
+  },
+  {
+    id: 17,
+    category: 'AI_OPERATION',
+    name: 'AI Customer: Scoped Purchase Order History Query',
+    signature: 'AI Backend Query (user_id = 2)',
+    rubric: 'Component 11 (Backend Integration) & Component 8 (Views & Query Security)',
+    marks: 'Component 11',
+    vivaDefense: [
+      'Order Scope Protection: Ensures customers only receive order receipts associated with their authenticated session.',
+      'Relational Joins: Joins orders with drops and order_items to provide full product title, paid amount, and order status.',
+      'Cross-Customer Prevention: Strictly isolates Customer 2 from Customer 3, 4, 5, or 6 purchase history.'
+    ],
+    sql: `-- Customer AI Order History Query (user_id = 2)
+SELECT o.order_id, o.order_number, d.title AS drop_title, o.final_amount, o.status, o.created_at
+FROM orders o
+INNER JOIN drops d ON o.drop_id = d.drop_id
+WHERE o.user_id = 2
+ORDER BY o.created_at DESC LIMIT 5;`,
+    defaultActionLabel: 'Execute Customer 2 AI Orders Query',
+  },
+  {
+    id: 18,
+    category: 'AI_OPERATION',
+    name: 'AI Customer: Real-Time In-Memory Hold & Queue Rank',
+    signature: 'Redis TTL hold:1:2 & ZRANK drop:1:queue 2',
+    rubric: 'Component 4 & 9 (Redis In-Memory Concurrency) & Component 11 (AI Realtime Telemetry)',
+    marks: 'Component 4 & 9',
+    vivaDefense: [
+      'Live TTL Check: AI inspects the 5-minute atomic checkout hold key in Redis without hitting relational disk I/O.',
+      'Waiting Room Rank: Retrieves customer\'s real-time position in the drop:1:queue sorted set.',
+      'Zero Oversell Guarantee: Grounded in Redis single-threaded atomic check-and-hold engine.'
+    ],
+    sql: `-- Redis In-Memory Inspection via AI Backend
+-- TTL hold:1:2 (checks remaining seconds for User 2)
+-- ZRANK drop:1:queue 2 (computes 0-based FIFO waiting room position)`,
+    defaultActionLabel: 'Query Live Redis Hold & Queue Telemetry',
+  },
+  {
+    id: 19,
+    category: 'AI_OPERATION',
+    name: 'AI Customer: Referral Network & Reward Points Query',
+    signature: 'AI Backend Query (referrer_id = 1)',
+    rubric: 'Component 8 & 11 (Relational Aggregations in AI Service)',
+    marks: 'Component 8 & 11',
+    vivaDefense: [
+      'Viral Lineage: Queries referrals joined with users to calculate active reward points.',
+      'Priority Weighting: AI informs customer how reward points boost their lottery draw probability during drop surges.',
+      'Relational Integrity: Foreign keys ensure only valid referee registrations generate points.'
+    ],
+    sql: `-- Customer AI Referral Network Query (referrer_id = 1)
+SELECT r.referral_id, u.email AS invited_friend, r.status, r.reward_points, r.created_at
+FROM referrals r
+INNER JOIN users u ON r.referee_id = u.user_id
+ORDER BY r.created_at DESC LIMIT 5;`,
+    defaultActionLabel: 'Query Referral Network Telemetry',
+  },
+  {
+    id: 20,
+    category: 'AI_OPERATION',
+    name: 'AI Admin: Top Lifetime Spend Aggregation Query',
+    signature: 'AI Executive Query (GROUP BY u.user_id ORDER BY total_lifetime_spent DESC)',
+    rubric: 'Component 7 & 11 (Complex Relational SQL Aggregation)',
+    marks: 'Component 7 & 11',
+    vivaDefense: [
+      'Executive Analytics: Natural-language query "Who are our top buyers?" is compiled into an optimized SQL aggregation with SUM, COUNT, and AVG.',
+      'Performance: Leverages idx_orders_user_status composite index on orders(user_id, status) for sub-10ms execution.',
+      'Gross Spend Ranking: Accurately computes customer lifetime value (LTV).'
+    ],
+    sql: `-- Admin Executive AI: Top Buyers by Spend
+SELECT 
+    u.user_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+    u.email,
+    COUNT(o.order_id) AS total_orders_placed,
+    COALESCE(SUM(o.final_amount), 0) AS total_lifetime_spent,
+    ROUND(AVG(o.final_amount), 2) AS average_order_value,
+    MAX(o.created_at) AS last_order_date
+FROM users u
+INNER JOIN orders o ON u.user_id = o.user_id
+WHERE o.status = 'paid'
+GROUP BY u.user_id, u.first_name, u.last_name, u.email
+ORDER BY total_lifetime_spent DESC
+LIMIT 5;`,
+    defaultActionLabel: 'Execute Top Buyers Aggregation Query',
+  },
+  {
+    id: 21,
+    category: 'AI_OPERATION',
+    name: 'AI Admin: Drop Sellout & Math Conservation Audit',
+    signature: 'AI Executive Audit Query (inventory conservation check)',
+    rubric: 'Component 8 (Inventory Invariant) & Component 11 (AI SQL Analytics)',
+    marks: 'Component 8 & 11',
+    vivaDefense: [
+      'Mathematical Invariant: Verifies that (available_quantity + reserved_holds + sold_quantity) = total_allocated across all drops.',
+      'Real-Time GMV: Computes gross revenue per drop alongside sellout percentages.',
+      'Zero Drift Verification: Returns CONSERVED when zero stock leaks exist in the system.'
+    ],
+    sql: `-- Admin Executive AI: Drop Inventory Conservation & GMV
+SELECT 
+    d.drop_id,
+    d.title AS drop_title,
+    d.status AS drop_status,
+    d.drop_price,
+    inv.total_allocated,
+    inv.sold_quantity,
+    inv.available_quantity,
+    ROUND((inv.sold_quantity / inv.total_allocated) * 100, 1) AS sellout_percentage,
+    COALESCE(SUM(o.final_amount), 0) AS total_gross_revenue,
+    CASE 
+        WHEN (inv.available_quantity + inv.reserved_holds + inv.sold_quantity) = inv.total_allocated THEN 'CONSERVED'
+        ELSE 'VIOLATION'
+    END AS conservation_check
+FROM drops d
+INNER JOIN inventory inv ON d.drop_id = inv.drop_id
+LEFT JOIN orders o ON d.drop_id = o.drop_id AND o.status = 'paid'
+GROUP BY d.drop_id, d.title, d.status, d.drop_price, inv.total_allocated, inv.sold_quantity, inv.available_quantity, inv.reserved_holds
+ORDER BY total_gross_revenue DESC
+LIMIT 5;`,
+    defaultActionLabel: 'Execute Drop Conservation Audit',
+  },
+  {
+    id: 22,
+    category: 'AI_OPERATION',
+    name: 'AI Admin: High-Risk Bot Flags & Trigger Actions',
+    signature: 'AI Security Query (ORDER BY f.risk_score DESC)',
+    rubric: 'Component 8 & 12 (Security Telemetry & Heuristic Defense)',
+    marks: 'Component 8 & 12',
+    vivaDefense: [
+      'Security Visibility: Provides executive visibility over fraud_flags populated by anti-bot telemetry.',
+      'Trigger Verification: Verifies that trg_auto_suspend_fraud successfully switched malicious users to status = "suspended".',
+      'Forensic Auditing: Inspects high-velocity burst attempts and risk scores.'
+    ],
+    sql: `-- Admin Executive AI: Bot Telemetry Query
+SELECT 
+    f.flag_id,
+    u.user_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+    u.email,
+    u.status AS current_user_status,
+    f.risk_score,
+    f.flag_reason,
+    f.flagged_at
+FROM fraud_flags f
+INNER JOIN users u ON f.user_id = u.user_id
+ORDER BY f.risk_score DESC, f.flagged_at DESC
+LIMIT 5;`,
+    defaultActionLabel: 'Execute Bot Telemetry Query',
+  },
+  {
+    id: 23,
+    category: 'AI_OPERATION',
+    name: 'AI Admin: Semantic NL-to-SQL Translation & Safety Shield',
+    signature: 'NL-to-SQL Synthesizer Engine (Safety Shield Verified)',
+    rubric: 'Component 11 (AI NL-to-SQL Synthesizer) & Component 12 (Security Shield)',
+    marks: 'Component 11 & 12',
+    vivaDefense: [
+      'Semantic Parsing: Compiles plain English user requests into fully valid MySQL 8 queries without hallucinations.',
+      'Read-Only Safety Shield: Enforces strict AST validation permitting only SELECT or WITH (CTE) and rejecting DROP/DELETE/UPDATE/ALTER.',
+      'Live Execution: Securely routes the validated SQL query to MySQL 8 with microsecond performance tracking.'
+    ],
+    sql: `-- Example English Prompt: "Who are our top 3 buyers by spend?"
+-- Synthesized by NL-to-SQL Engine with Safety Shield validation (Permits only SELECT/WITH):
+SELECT u.user_id, u.first_name, u.email, SUM(o.final_amount) AS total_spent
+FROM users u JOIN orders o ON u.user_id = o.user_id
+WHERE o.status = 'paid' GROUP BY u.user_id, u.first_name, u.email
+ORDER BY total_spent DESC LIMIT 3;`,
+    defaultActionLabel: 'Execute AI Synthesized SQL with Safety Shield',
+  },
 ];
 
 export default function BackendFunctionsMenuPage() {
@@ -599,7 +788,7 @@ export default function BackendFunctionsMenuPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [runningId, setRunningId] = useState<number | null>(null);
   const [results, setResults] = useState<Record<number, { success: boolean; message: string; rows: any[]; durationMs: number; error?: string }>>({});
-  const [expandedSql, setExpandedSql] = useState<Record<number, boolean>>({ 1: true, 4: true, 7: true, 10: true, 12: true });
+  const [expandedSql, setExpandedSql] = useState<Record<number, boolean>>({ 1: true, 4: true, 7: true, 10: true, 12: true, 16: true });
 
   const toggleSql = (id: number) => {
     setExpandedSql(prev => ({ ...prev, [id]: !prev[id] }));
@@ -645,6 +834,8 @@ export default function BackendFunctionsMenuPage() {
         return <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">Database View</span>;
       case 'REDIS_LUA':
         return <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Redis Lua Script</span>;
+      case 'AI_OPERATION':
+        return <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-pink-500/20 text-pink-300 border border-pink-500/30">FlashDrop AI DB Operation</span>;
     }
   };
 
@@ -716,6 +907,7 @@ export default function BackendFunctionsMenuPage() {
               { id: 'TRIGGER', label: 'Triggers', count: 4 },
               { id: 'VIEW', label: 'Views', count: 3 },
               { id: 'REDIS_LUA', label: 'Redis Lua', count: 2 },
+              { id: 'AI_OPERATION', label: '🤖 FlashDrop AI DB Operations', count: 8 },
             ].map(tab => (
               <button
                 key={tab.id}

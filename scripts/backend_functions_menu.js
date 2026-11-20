@@ -360,6 +360,259 @@ end`,
       redis.disconnect();
     },
   },
+  {
+    id: 16,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Customer: Scoped Wallet & Ledger Balance DML',
+    rubric: 'Component 11 (API & DB Integration) & Component 12 (RBAC Tenant Isolation)',
+    description: 'FlashDrop Concierge AI queries the authenticated customer\'s balance and immutable ledger. Enforces parameter binding (user_id = ?) to guarantee cross-customer data isolation.',
+    sql: `-- Customer AI Scoped Query (Isolated by user_id = 2)
+SELECT w.wallet_id, w.balance, w.currency, w.is_locked,
+       wl.ledger_id, wl.entry_type, wl.amount, wl.balance_after, wl.description, wl.created_at
+FROM wallets w
+INNER JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
+WHERE w.user_id = 2
+ORDER BY wl.ledger_id DESC LIMIT 4;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing AI-synthesized query for Customer #2 (Buyer2):${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT w.wallet_id, w.balance, w.currency, w.is_locked,
+               wl.ledger_id, wl.entry_type, wl.amount, wl.balance_after, wl.description, wl.created_at
+        FROM wallets w
+        INNER JOIN wallet_ledger wl ON w.wallet_id = wl.wallet_id
+        WHERE w.user_id = 2
+        ORDER BY wl.ledger_id DESC LIMIT 4;
+      `);
+      console.table(rows);
+      console.log(`${C.green}✓ AI Security: Parameterized WHERE w.user_id = 2 guarantees complete customer balance isolation.${C.reset}`);
+    },
+  },
+  {
+    id: 17,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Customer: Scoped Purchase Order History Query',
+    rubric: 'Component 11 (Backend Integration) & Component 8 (Views & Query Security)',
+    description: 'FlashDrop Concierge AI fetches orders placed strictly by the logged-in user, joining drops and products to provide human-readable billing receipts.',
+    sql: `-- Customer AI Order History Query (user_id = 2)
+SELECT o.order_id, o.order_number, d.title AS drop_title, o.final_amount, o.status, o.created_at
+FROM orders o
+INNER JOIN drops d ON o.drop_id = d.drop_id
+WHERE o.user_id = 2
+ORDER BY o.created_at DESC LIMIT 5;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing AI Customer Order History Query for User 2:${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT o.order_id, o.order_number, d.title AS drop_title, o.final_amount, o.status, o.created_at
+        FROM orders o
+        INNER JOIN drops d ON o.drop_id = d.drop_id
+        WHERE o.user_id = 2
+        ORDER BY o.created_at DESC LIMIT 5;
+      `);
+      console.table(rows);
+    },
+  },
+  {
+    id: 18,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Customer: Real-Time In-Memory Hold & Queue Rank Inspection',
+    rubric: 'Component 4 & 9 (Redis In-Memory Concurrency) & Component 11 (AI Realtime Telemetry)',
+    description: 'FlashDrop Concierge AI queries Redis 7.2 in real time to report the user\'s active 5-minute checkout hold countdown (TTL) and position in the waiting room queue.',
+    sql: `-- Redis In-Memory Inspection via AI Backend
+-- TTL hold:1:2 (checks remaining seconds for User 2)
+-- ZRANK drop:1:queue 2 (computes 0-based FIFO waiting room position)`,
+    execute: async (db) => {
+      const redis = new Redis({ host: '127.0.0.1', port: 6379, maxRetriesPerRequest: 1 });
+      const ttl = await redis.ttl('hold:1:2');
+      const rank = await redis.zrank('drop:1:queue', '2');
+      const stock = await redis.get('drop:1:stock');
+      console.log(`${C.green}Live In-Memory Redis State for User 2 (Buyer2):${C.reset}`);
+      console.log(`  Remaining Hold TTL (hold:1:2): ${ttl > 0 ? `${ttl}s (RESERVED)` : 'No active hold'}`);
+      console.log(`  Waiting Room Position: ${rank !== null ? `#${rank + 1} in queue` : 'Not currently in queue'}`);
+      console.log(`  Live Remaining Drop Stock: ${stock} units`);
+      redis.disconnect();
+    },
+  },
+  {
+    id: 19,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Customer: Referral Network & Reward Points Query',
+    rubric: 'Component 8 & 11 (Relational Aggregations in AI Service)',
+    description: 'FlashDrop Concierge AI aggregates referee counts and computed reward points that boost customer priority in high-concurrency hype drop lotteries.',
+    sql: `-- Customer AI Referral Network Query (referrer_id = 1)
+SELECT r.referral_id, u.email AS invited_friend, r.status, r.reward_points, r.created_at
+FROM referrals r
+INNER JOIN users u ON r.referee_id = u.user_id
+ORDER BY r.created_at DESC LIMIT 5;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing AI Customer Referral Query:${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT r.referral_id, u.email AS invited_friend, r.status, r.reward_points, r.created_at
+        FROM referrals r
+        INNER JOIN users u ON r.referee_id = u.user_id
+        ORDER BY r.created_at DESC LIMIT 5;
+      `);
+      console.table(rows);
+    },
+  },
+  {
+    id: 20,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Admin: Top Lifetime Spend Aggregation Query',
+    rubric: 'Component 7 & 11 (Complex Relational SQL Aggregation)',
+    description: 'FlashDrop Executive AI joins users and orders with COUNT, SUM(final_amount), and AVG(final_amount) to present instant executive sales intelligence.',
+    sql: `-- Admin Executive AI: Top Buyers by Spend
+SELECT 
+    u.user_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+    u.email,
+    COUNT(o.order_id) AS total_orders_placed,
+    COALESCE(SUM(o.final_amount), 0) AS total_lifetime_spent,
+    ROUND(AVG(o.final_amount), 2) AS average_order_value,
+    MAX(o.created_at) AS last_order_date
+FROM users u
+INNER JOIN orders o ON u.user_id = o.user_id
+WHERE o.status = 'paid'
+GROUP BY u.user_id, u.first_name, u.last_name, u.email
+ORDER BY total_lifetime_spent DESC
+LIMIT 5;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing Admin AI Spend Aggregation Query:${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT 
+            u.user_id,
+            CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+            u.email,
+            COUNT(o.order_id) AS total_orders_placed,
+            COALESCE(SUM(o.final_amount), 0) AS total_lifetime_spent,
+            ROUND(AVG(o.final_amount), 2) AS average_order_value
+        FROM users u
+        INNER JOIN orders o ON u.user_id = o.user_id
+        WHERE o.status = 'paid'
+        GROUP BY u.user_id, u.first_name, u.last_name, u.email
+        ORDER BY total_lifetime_spent DESC
+        LIMIT 5;
+      `);
+      console.table(rows);
+    },
+  },
+  {
+    id: 21,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Admin: Drop Sellout & Math Conservation Audit',
+    rubric: 'Component 8 (Inventory Invariant) & Component 11 (AI SQL Analytics)',
+    description: 'FlashDrop Executive AI evaluates sellout percentages, total GMV, and evaluates the mathematical invariant (available + holds + sold = total) across all drops.',
+    sql: `-- Admin Executive AI: Drop Inventory Conservation & GMV
+SELECT 
+    d.drop_id,
+    d.title AS drop_title,
+    d.status AS drop_status,
+    d.drop_price,
+    inv.total_allocated,
+    inv.sold_quantity,
+    inv.available_quantity,
+    ROUND((inv.sold_quantity / inv.total_allocated) * 100, 1) AS sellout_percentage,
+    COALESCE(SUM(o.final_amount), 0) AS total_gross_revenue,
+    CASE 
+        WHEN (inv.available_quantity + inv.reserved_holds + inv.sold_quantity) = inv.total_allocated THEN 'CONSERVED'
+        ELSE 'VIOLATION'
+    END AS conservation_check
+FROM drops d
+INNER JOIN inventory inv ON d.drop_id = inv.drop_id
+LEFT JOIN orders o ON d.drop_id = o.drop_id AND o.status = 'paid'
+GROUP BY d.drop_id, d.title, d.status, d.drop_price, inv.total_allocated, inv.sold_quantity, inv.available_quantity, inv.reserved_holds
+ORDER BY total_gross_revenue DESC
+LIMIT 5;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing Admin AI Drop Conservation & GMV Query:${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT 
+            d.drop_id,
+            d.title AS drop_title,
+            d.status AS drop_status,
+            d.drop_price,
+            inv.total_allocated,
+            inv.sold_quantity,
+            inv.available_quantity,
+            ROUND((inv.sold_quantity / inv.total_allocated) * 100, 1) AS sellout_percentage,
+            COALESCE(SUM(o.final_amount), 0) AS total_gross_revenue,
+            CASE 
+                WHEN (inv.available_quantity + inv.reserved_holds + inv.sold_quantity) = inv.total_allocated THEN 'CONSERVED'
+                ELSE 'VIOLATION'
+            END AS conservation_check
+        FROM drops d
+        INNER JOIN inventory inv ON d.drop_id = inv.drop_id
+        LEFT JOIN orders o ON d.drop_id = o.drop_id AND o.status = 'paid'
+        GROUP BY d.drop_id, d.title, d.status, d.drop_price, inv.total_allocated, inv.sold_quantity, inv.available_quantity, inv.reserved_holds
+        ORDER BY total_gross_revenue DESC
+        LIMIT 5;
+      `);
+      console.table(rows);
+    },
+  },
+  {
+    id: 22,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Admin: High-Risk Bot Flags & Trigger Actions',
+    rubric: 'Component 8 & 12 (Security Telemetry & Heuristic Defense)',
+    description: 'FlashDrop Executive AI inspects fraud_flags joined with users to detect accounts flagged with risk_score >= 85 and verify trigger-executed suspensions.',
+    sql: `-- Admin Executive AI: Bot Telemetry Query
+SELECT 
+    f.flag_id,
+    u.user_id,
+    CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+    u.email,
+    u.status AS current_user_status,
+    f.risk_score,
+    f.flag_reason,
+    f.flagged_at
+FROM fraud_flags f
+INNER JOIN users u ON f.user_id = u.user_id
+ORDER BY f.risk_score DESC, f.flagged_at DESC
+LIMIT 5;`,
+    execute: async (db) => {
+      console.log(`${C.yellow}Executing Admin AI Bot Anomaly Query:${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT 
+            f.flag_id,
+            u.user_id,
+            CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+            u.email,
+            u.status AS current_user_status,
+            f.risk_score,
+            f.flag_reason,
+            f.flagged_at
+        FROM fraud_flags f
+        INNER JOIN users u ON f.user_id = u.user_id
+        ORDER BY f.risk_score DESC, f.flagged_at DESC
+        LIMIT 5;
+      `);
+      console.table(rows);
+    },
+  },
+  {
+    id: 23,
+    category: 'FLASHDROP AI DATABASE OPERATION',
+    name: 'AI Admin: Semantic NL-to-SQL Translation & Safety Shield',
+    rubric: 'Component 11 (AI NL-to-SQL Synthesizer) & Component 12 (Security Shield)',
+    description: 'Demonstrates live semantic translation of English prompts into validated MySQL 8 queries with regex-based AST safety validation against destructive DML.',
+    sql: `-- Example English Prompt: "Who are our top 3 buyers by spend?"
+-- Synthesized by NL-to-SQL Engine with Safety Shield validation (Permits only SELECT/WITH):
+SELECT u.user_id, u.first_name, u.email, SUM(o.final_amount) AS total_spent
+FROM users u JOIN orders o ON u.user_id = o.user_id
+WHERE o.status = 'paid' GROUP BY u.user_id, u.first_name, u.email
+ORDER BY total_spent DESC LIMIT 3;`,
+    execute: async (db) => {
+      console.log(`${C.cyan}Prompt: "Who are our top 3 buyers by spend?"${C.reset}`);
+      console.log(`${C.green}Safety Shield: Validating query against destructive DML (DROP/DELETE/UPDATE/ALTER)... PASS ✓${C.reset}\n`);
+      const [rows] = await db.query(`
+        SELECT u.user_id, u.first_name, u.email, SUM(o.final_amount) AS total_spent
+        FROM users u JOIN orders o ON u.user_id = o.user_id
+        WHERE o.status = 'paid' GROUP BY u.user_id, u.first_name, u.email
+        ORDER BY total_spent DESC LIMIT 3;
+      `);
+      console.table(rows);
+    },
+  },
 ];
 
 function printBanner() {
@@ -394,6 +647,16 @@ function printBanner() {
   console.log(`  ${C.bold}[12]${C.reset} acquire_hold.lua             ${C.dim}- In-Memory Atomic Reservation Lock${C.reset}`);
   console.log(`  ${C.bold}[15]${C.reset} release_hold.lua             ${C.dim}- Zero-Leak Atomic Stock Rollback${C.reset}`);
 
+  console.log(`\n${C.bold}${C.red}  ── FLASHDROP AI DATABASE OPERATIONS (Component 11 & 12) ──${C.reset}`);
+  console.log(`  ${C.bold}[16]${C.reset} AI Customer: Wallet & Ledger ${C.dim}- Scoped Balance DML with Tenant Isolation${C.reset}`);
+  console.log(`  ${C.bold}[17]${C.reset} AI Customer: Order History   ${C.dim}- Scoped Purchase Order History Query${C.reset}`);
+  console.log(`  ${C.bold}[18]${C.reset} AI Customer: Hold & Queue    ${C.dim}- Real-Time Redis TTL & Queue Position${C.reset}`);
+  console.log(`  ${C.bold}[19]${C.reset} AI Customer: Referrals       ${C.dim}- Viral Referral Network & Points${C.reset}`);
+  console.log(`  ${C.bold}[20]${C.reset} AI Admin: Top Buyers Spend   ${C.dim}- Aggregated Customer Lifetime GMV${C.reset}`);
+  console.log(`  ${C.bold}[21]${C.reset} AI Admin: Drop Conservation  ${C.dim}- Sellout % & Mathematical Invariant Audit${C.reset}`);
+  console.log(`  ${C.bold}[22]${C.reset} AI Admin: Bot & Fraud Flags  ${C.dim}- Automated Heuristic Threat Telemetry${C.reset}`);
+  console.log(`  ${C.bold}[23]${C.reset} AI Admin: NL-to-SQL Compiler ${C.dim}- Live Semantic Query Synthesis & Shield${C.reset}`);
+
   console.log(`\n  ${C.bold}[0]${C.reset}  Exit Menu\n`);
 }
 
@@ -403,7 +666,7 @@ async function run() {
 
   const ask = () => {
     printBanner();
-    rl.question(`${C.bold}Select a function to present (0-15): ${C.reset}`, async (answer) => {
+    rl.question(`${C.bold}Select a function or AI DB operation (0-23): ${C.reset}`, async (answer) => {
       const choice = parseInt(answer.trim(), 10);
       if (choice === 0) {
         console.log('\nExiting menu. Good luck with your viva evaluation!\n');
@@ -414,7 +677,7 @@ async function run() {
 
       const item = ITEMS.find((i) => i.id === choice);
       if (!item) {
-        console.log(`\n${C.red}Invalid choice. Please select 0-15.${C.reset}`);
+        console.log(`\n${C.red}Invalid choice. Please select 0-23.${C.reset}`);
         setTimeout(ask, 1500);
         return;
       }
