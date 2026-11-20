@@ -58,10 +58,13 @@ async function startLiveMonitor() {
   function logEvent(badge, text) {
     const time = new Date().toLocaleTimeString();
     recentEvents.unshift(`${C.dim}[${time}]${C.reset} ${badge} ${text}`);
-    if (recentEvents.length > 6) recentEvents.pop();
+    if (recentEvents.length > 4) recentEvents.pop();
   }
 
-  logEvent(`${C.green}● SYSTEM${C.reset}`, 'Live monitor attached to MySQL 8.0 & Redis 7.2');
+  logEvent(`${C.green}● INIT${C.reset}`, 'Monitor connected to MySQL 8 & Redis 7');
+
+  // Clear entire terminal and scrollback once at start
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
 
   const renderLoop = async () => {
     try {
@@ -69,12 +72,6 @@ async function startLiveMonitor() {
       const stockVal = await redis.get('drop:1:stock');
       const currentStock = stockVal !== null ? Number(stockVal) : 'N/A';
       const holdKeys = await redis.keys('hold:1:*');
-      const holdsList = [];
-      for (const hk of holdKeys.slice(0, 5)) {
-        const ttl = await redis.ttl(hk);
-        const holder = await redis.get(hk);
-        holdsList.push({ key: hk, ttl, holder });
-      }
       const queueDepth = await redis.zcard('drop:1:queue').catch(() => 0);
       const lotteryEntries = await redis.scard('drop:1:lottery').catch(() => 0);
       const sessionKeys = await redis.keys('session:*');
@@ -110,27 +107,27 @@ async function startLiveMonitor() {
       // 3. Detect Real-Time State Changes & Push Events
       if (prevStock !== null && currentStock !== prevStock) {
         logEvent(
-          `${C.cyan}⚡ REDIS LUA${C.reset}`,
-          `Inventory Counter modified: ${prevStock} -> ${currentStock} units`
+          `${C.cyan}⚡ LUA${C.reset}`,
+          `Redis Stock: ${prevStock} -> ${currentStock} units`
         );
       }
       if (prevOrdersCount !== null && ordersCount > prevOrdersCount) {
         const diff = ordersCount - prevOrdersCount;
         logEvent(
-          `${C.green}🛍️ MYSQL ACID${C.reset}`,
-          `+${diff} New Order(s) created! Latest: #${topOrder.order_id} (${topOrder.order_number}) for $${topOrder.final_amount}`
+          `${C.green}🛍️ ACID${C.reset}`,
+          `+${diff} Order created: #${topOrder.order_id} ($${topOrder.final_amount})`
         );
       }
       if (prevLedgerId !== null && topLedger.ledger_id > prevLedgerId) {
         logEvent(
-          `${C.yellow}💰 WALLET LEDGER${C.reset}`,
-          `Entry #${topLedger.ledger_id} [${topLedger.entry_type}]: $${topLedger.amount} | New Balance: $${topLedger.balance_after}`
+          `${C.yellow}💰 LEDGER${C.reset}`,
+          `#${topLedger.ledger_id} [${topLedger.entry_type}]: $${topLedger.amount} (Bal: $${topLedger.balance_after})`
         );
       }
       if (prevFraudCount !== null && fraudCount > prevFraudCount) {
         logEvent(
-          `${C.red}🚨 FRAUD TRIGGER${C.reset}`,
-          `trg_auto_suspend_fraud_user fired! Risk flagged; user auto-suspended.`
+          `${C.red}🚨 FRAUD${C.reset}`,
+          `trg_auto_suspend fired! High-risk user suspended.`
         );
       }
 
@@ -139,62 +136,46 @@ async function startLiveMonitor() {
       prevLedgerId = topLedger.ledger_id;
       prevFraudCount = fraudCount;
 
-      // 4. Render Clean Dashboard
-      console.clear();
-      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
-
-      console.log(`${C.bold}${C.red}╔═══════════════════════════════════════════════════════════════════════════════════╗${C.reset}`);
-      console.log(`${C.bold}${C.red}║    ⚡ FLASHDROP DUAL-ENGINE REAL-TIME MISSION CONTROL MONITOR (PES CSE)           ║${C.reset}`);
-      console.log(`${C.bold}${C.red}╚═══════════════════════════════════════════════════════════════════════════════════╝${C.reset}`);
-      console.log(` ${C.dim}Timestamp:${C.reset} ${now}  │  ${C.green}● MySQL 8.0: 127.0.0.1:3306${C.reset}  │  ${C.cyan}● Redis 7.2: 127.0.0.1:6379${C.reset}\n`);
-
-      // ─── REDIS IN-MEMORY RADAR ───
-      console.log(`${C.bold}${C.cyan}▶ [REDIS 7.2 IN-MEMORY CACHE & CONCURRENCY GUARD]${C.reset}`);
-      console.log(`  ├─ ${C.bold}Live Stock Key (drop:1:stock):${C.reset}   ${C.green}${currentStock}${C.reset} units remaining`);
-      console.log(`  ├─ ${C.bold}Active 5-Min Holds (hold:1:*):${C.reset}    ${holdKeys.length} hold(s) active`);
-      if (holdsList.length > 0) {
-        for (const h of holdsList) {
-          console.log(`  │   └─ ${C.yellow}${h.key}${C.reset} (User: ${h.holder}) -> ${C.cyan}${h.ttl}s remaining${C.reset}`);
-        }
-      } else {
-        console.log(`  │   └─ ${C.dim}No holds pending (ready for burst checkout)${C.reset}`);
-      }
-      console.log(`  ├─ ${C.bold}Waiting Room Queue (ZSET):${C.reset}        ${queueDepth} buyers waiting in line`);
-      console.log(`  ├─ ${C.bold}Fair Lottery Ballot Pool (SET):${C.reset}   ${lotteryEntries} registered tickets`);
-      console.log(`  └─ ${C.bold}Active User Sessions (HASH):${C.reset}      ${sessionKeys.length} signed-in token(s)`);
-
-      console.log('');
-
-      // ─── MYSQL RELATIONAL CORE ───
+      // 4. Compact, Zero-Scroll In-Place Terminal Rendering (max 68 cols, max 14 rows)
+      const now = new Date().toLocaleTimeString();
       const conserved = (inv.available_quantity + inv.reserved_holds + inv.sold_quantity) === inv.total_allocated;
       const conservationBadge = conserved
-        ? `${C.green}✅ [100% CONSERVED]${C.reset}`
-        : `${C.red}❌ [VIOLATION]${C.reset}`;
+        ? `${C.green}100% CONSERVED${C.reset}`
+        : `${C.red}VIOLATION${C.reset}`;
 
-      console.log(`${C.bold}${C.red}▶ [MYSQL 8.0 ACID RELATIONAL DURABILITY CORE]${C.reset}`);
-      console.log(`  ├─ ${C.bold}Drop 1 Inventory Row:${C.reset}             Avail: ${C.green}${inv.available_quantity}${C.reset} │ Sold: ${C.white}${inv.sold_quantity}${C.reset} │ Holds: ${C.yellow}${inv.reserved_holds}${C.reset} │ Total: ${inv.total_allocated}`);
-      console.log(`  ├─ ${C.bold}Conservation Check Constraint:${C.reset}    ${inv.available_quantity} + ${inv.reserved_holds} + ${inv.sold_quantity} = ${inv.total_allocated} ${conservationBadge}`);
-      console.log(`  ├─ ${C.bold}Total Orders in Database:${C.reset}         ${C.bold}${ordersCount}${C.reset} orders  │  ${C.bold}Gross Revenue (GMV):${C.reset} ${C.green}$${gmv}${C.reset}`);
-      console.log(`  ├─ ${C.bold}Latest Order Record:${C.reset}              #${topOrder.order_id || 'N/A'} (${topOrder.order_number || 'N/A'}) - $${topOrder.final_amount || '0'} [${topOrder.status || 'N/A'}]`);
-      console.log(`  ├─ ${C.bold}Latest Double-Entry Ledger:${C.reset}       #${topLedger.ledger_id || 'N/A'} [${topLedger.entry_type || 'N/A'}]: $${topLedger.amount || '0'} │ Balance After: $${topLedger.balance_after || '0'}`);
-      console.log(`  └─ ${C.bold}Fraud Engine & Triggers:${C.reset}          ${fraudCount} flags evaluated  │  ${C.red}${suspendedCount} users auto-suspended${C.reset}`);
+      const lines = [
+        `${C.bold}${C.red}═══ ⚡ FLASHDROP DUAL-ENGINE MISSION CONTROL (PES CSE) ═══════════════${C.reset}`,
+        ` ${C.dim}Time:${C.reset} ${now}  │  ${C.green}● MySQL: 3306${C.reset}  │  ${C.cyan}● Redis: 6379${C.reset}`,
+        ``,
+        `${C.bold}${C.cyan}▶ [REDIS 7.2 IN-MEMORY CONCURRENCY LAYER]${C.reset}`,
+        `  Stock: ${C.green}${currentStock} units${C.reset}  │  Holds: ${C.yellow}${holdKeys.length} active${C.reset}  │  Queue: ${queueDepth}  │  Lottery: ${lotteryEntries}`,
+        ``,
+        `${C.bold}${C.red}▶ [MYSQL 8.0 ACID RELATIONAL DURABILITY CORE]${C.reset}`,
+        `  Drop 1 Stock: Avail ${C.green}${inv.available_quantity || 0}${C.reset} │ Sold ${inv.sold_quantity || 0} │ Holds ${inv.reserved_holds || 0} │ Total ${inv.total_allocated || 0} [${conservationBadge}]`,
+        `  Orders: ${C.bold}${ordersCount}${C.reset} ($${gmv} GMV)  │  Latest: #${topOrder.order_id || '0'} ($${topOrder.final_amount || '0'}) [${topOrder.status || 'none'}]`,
+        `  Ledger: #${topLedger.ledger_id || '0'} ($${topLedger.amount || '0'}, Bal: $${topLedger.balance_after || '0'})  │  Fraud Flags: ${fraudCount} (${suspendedCount} suspended)`,
+        ``,
+        `${C.bold}${C.yellow}▶ [REAL-TIME EVENT & AUDIT STREAM]${C.reset}`,
+      ];
 
-      console.log('');
-
-      // ─── LIVE EVENT STREAM ───
-      console.log(`${C.bold}${C.yellow}▶ [REAL-TIME EVENT STREAM & AUDIT FEED] (Updates live as you interact with Web UI):${C.reset}`);
       if (recentEvents.length === 0) {
-        console.log(`  ${C.dim}Listening for checkout, holds, bot attacks, and chaos load events...${C.reset}`);
+        lines.push(`  ${C.dim}Listening for checkout, holds, and database mutations...${C.reset}`);
       } else {
-        for (const ev of recentEvents) {
-          console.log(`  ${ev}`);
+        for (const ev of recentEvents.slice(0, 3)) {
+          lines.push(`  ${ev}`);
         }
       }
 
-      console.log(`\n${C.dim}───────────────────────────────────────────────────────────────────────────────────${C.reset}`);
-      console.log(` ${C.dim}Keep this window side-by-side with Chrome (http://localhost:3000) during Viva! [Ctrl+C to exit]${C.reset}`);
+      lines.push(`${C.dim}────────────────────────────────────────────────────────────────────${C.reset}`);
+      lines.push(` ${C.dim}Keep side-by-side with Chrome (http://localhost:3000) [Ctrl+C to exit]${C.reset}`);
+
+      // Overwrite in-place starting at top-left (0,0) with line-clearing (\x1b[K)
+      // This guarantees zero flickering and zero runaway scrolling!
+      const output = '\x1b[H' + lines.map(l => l + '\x1b[K').join('\n') + '\x1b[J';
+      process.stdout.write(output);
+
     } catch (err) {
-      console.error('Monitoring query error:', err.message);
+      process.stdout.write(`\x1b[H\x1b[KMonitoring query error: ${err.message}\x1b[J\n`);
     }
   };
 
