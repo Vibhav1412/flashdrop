@@ -56,7 +56,7 @@ function getDefaultWelcomeMessage(u: UserSession | null): ChatMessage {
     return {
       id: 'welcome-admin',
       sender: 'assistant',
-      text: `Welcome, Administrator **${u?.name || 'Admin'}**! I am your **FlashDrop Executive Intelligence** assistant. You have full analytical visibility over our MySQL 8.0 relational schema, inventory conservation metrics, bot security flags, and platform GMV.\n\n*Note: Admin conversation history is completely isolated from all customer accounts.*`,
+      text: `Welcome, Administrator **${u?.name || 'Admin'}**! I am your **FlashDrop Executive Intelligence** assistant. You have full analytical visibility over our MySQL 8.0 relational schema, inventory conservation metrics, bot security flags, and platform GMV.`,
       timestamp: time,
       suggestedQuestions: [
         'Who are our top 3 buyers by total spending?',
@@ -73,7 +73,7 @@ function getDefaultWelcomeMessage(u: UserSession | null): ChatMessage {
   return {
     id: `welcome-cust-${customerId}`,
     sender: 'assistant',
-    text: `Hi **${customerName}**! I'm your **FlashDrop Shopper Concierge**. All queries and chat history are strictly isolated to your account (user_id = ${customerId}). How can I help you today with your orders, wallet balance, active drop reservations, or referral points?`,
+    text: `Hi **${customerName}**! I'm your **FlashDrop Shopper Concierge**. How can I help you today with your orders, wallet balance, active drop reservations, or referral points?`,
     timestamp: time,
     suggestedQuestions: [
       'What is my wallet balance & recent transactions?',
@@ -103,12 +103,25 @@ export default function FlashDropAiChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Load saved conversation histories from localStorage
+  // 1. Load saved conversation histories from localStorage & clean up any old notes
   useEffect(() => {
     try {
       const saved = localStorage.getItem('flashdrop_isolated_chat_history');
       if (saved) {
-        setHistoryByAccount(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        Object.keys(parsed).forEach((k) => {
+          if (Array.isArray(parsed[k])) {
+            parsed[k] = parsed[k].map((m: ChatMessage) => {
+              if (m.text) {
+                m.text = m.text
+                  .replace(/\n\n\*Note: Admin conversation history is completely isolated from all customer accounts\.\*/g, '')
+                  .replace(/All queries and chat history are strictly isolated to your account \(user_id = \d+\)\.\s*/g, '');
+              }
+              return m;
+            });
+          }
+        });
+        setHistoryByAccount(parsed);
       }
     } catch {
       // Fallback if localStorage is unavailable
