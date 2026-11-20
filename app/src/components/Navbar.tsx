@@ -9,8 +9,9 @@ export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<{ userId: number; email: string; role: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSwitchDropdown, setShowSwitchDropdown] = useState(false);
 
-  useEffect(() => {
+  const fetchSession = () => {
     fetch('/api/auth/me')
       .then((res) => res.json())
       .then((data) => {
@@ -22,13 +23,39 @@ export default function Navbar() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchSession();
+    window.addEventListener('flashdrop_auth_change', fetchSession);
+    return () => window.removeEventListener('flashdrop_auth_change', fetchSession);
   }, [pathname]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
+    window.dispatchEvent(new Event('flashdrop_auth_change'));
     router.push('/login');
     router.refresh();
+  };
+
+  const handleSwitchAccount = async (email: string, password: string) => {
+    setShowSwitchDropdown(false);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUser(data.user);
+        window.dispatchEvent(new Event('flashdrop_auth_change'));
+        router.refresh();
+      }
+    } catch (e) {
+      console.error('Account switch failed', e);
+    }
   };
 
   const isAdmin = user?.role === 'admin';
@@ -74,19 +101,148 @@ export default function Navbar() {
             </div>
           ) : null}
 
-          {/* User Session Pill */}
+          {/* User Session Pill & Quick Account Switcher */}
           {!loading && (
             user ? (
-              <div className="flex items-center space-x-2 border-l border-zinc-800 pl-3">
-                <div className={`px-2.5 py-1 rounded-md text-[11px] font-bold border flex items-center space-x-1.5 ${
-                  isAdmin 
-                    ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' 
-                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                }`}>
+              <div className="relative flex items-center space-x-2 border-l border-zinc-800 pl-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSwitchDropdown(!showSwitchDropdown)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border flex items-center space-x-1.5 transition hover:brightness-110 ${
+                    isAdmin 
+                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' 
+                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  }`}
+                  title="Click to Switch Customer / Admin Account"
+                >
                   <span>{isAdmin ? '🛡️' : '👤'}</span>
                   <span className="uppercase">{user.role}</span>
                   <span className="text-zinc-400 font-normal">({user.name.split(' ')[0]})</span>
-                </div>
+                  <span className="text-[9px] text-zinc-500">▼</span>
+                </button>
+
+                {/* Account Switcher Dropdown */}
+                {showSwitchDropdown && (
+                  <div className="absolute top-10 right-0 w-64 rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl p-2 z-50 font-sans space-y-1">
+                    <div className="text-[10px] font-mono uppercase text-zinc-500 px-2 py-1 font-semibold flex items-center justify-between">
+                      <span>Switch Persona (Demo)</span>
+                      <span className="text-[9px] text-emerald-400">1-Click</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('admin@flashdrop.com', 'admin123')}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        isAdmin ? 'bg-rose-950/60 text-rose-300 font-bold border border-rose-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span>🛡️</span>
+                        <div>
+                          <div>Admin</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">admin@flashdrop.com</div>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono text-rose-400">DBA</span>
+                    </button>
+
+                    <div className="border-t border-zinc-800 my-1"></div>
+                    <div className="text-[9px] font-mono uppercase text-emerald-400 px-2 py-0.5 font-semibold">
+                      Customer Personas
+                    </div>
+
+                    {/* Customer 1 */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('user_2@flashdrop.com', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'user_2@flashdrop.com' ? 'bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>👤</span>
+                        <div>
+                          <div className="text-xs">Customer 1 (Buyer2)</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">2 orders • Platinum</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">$376.00</span>
+                    </button>
+
+                    {/* Customer 2 */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('user_3@flashdrop.com', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'user_3@flashdrop.com' ? 'bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>👤</span>
+                        <div>
+                          <div className="text-xs">Customer 2 (Buyer3)</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">1 order • Gold</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">$820.50</span>
+                    </button>
+
+                    {/* Customer 3 */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('user_4@flashdrop.com', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'user_4@flashdrop.com' ? 'bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>👤</span>
+                        <div>
+                          <div className="text-xs">Customer 3 (Buyer4)</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">2 orders • Silver</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">$145.00</span>
+                    </button>
+
+                    {/* Customer 4 */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('user_5@flashdrop.com', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'user_5@flashdrop.com' ? 'bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>👤</span>
+                        <div>
+                          <div className="text-xs">Customer 4 (Buyer5)</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">VIP • 0 orders</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">$1,250.00</span>
+                    </button>
+
+                    {/* Customer 5 */}
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchAccount('user_6@flashdrop.com', 'customer123')}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center justify-between transition ${
+                        user.email === 'user_6@flashdrop.com' ? 'bg-emerald-950/60 text-emerald-300 font-bold border border-emerald-800/50' : 'text-zinc-300 hover:bg-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <span>👤</span>
+                        <div>
+                          <div className="text-xs">Customer 5 (Buyer6)</div>
+                          <div className="text-[9px] text-zinc-500 font-mono">1 order • Budget</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">$55.00</span>
+                    </button>
+                  </div>
+                )}
+
                 <button
                   onClick={handleLogout}
                   className="text-[11px] text-zinc-400 hover:text-white px-2 py-1 rounded bg-zinc-800/80 hover:bg-zinc-700/80 transition"

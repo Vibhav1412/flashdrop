@@ -50,11 +50,12 @@ export default function FlashDropAiChat() {
   const [inputPrompt, setInputPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showInChatSwitcher, setShowInChatSwitcher] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fetch current user role and session on mount & navigation
-  useEffect(() => {
+  // 1. Fetch current user role and session on mount, navigation & auth change event
+  const fetchSession = () => {
     fetch('/api/auth/me')
       .then((res) => res.json())
       .then((data) => {
@@ -66,52 +67,75 @@ export default function FlashDropAiChat() {
         setLoadingUser(false);
       })
       .catch(() => setLoadingUser(false));
+  };
+
+  useEffect(() => {
+    fetchSession();
+    window.addEventListener('flashdrop_auth_change', fetchSession);
+    return () => window.removeEventListener('flashdrop_auth_change', fetchSession);
   }, [pathname]);
 
-  // 2. Initialize default welcome message based on role
+  // 2. Initialize default welcome message based on active role & user
   useEffect(() => {
     if (loadingUser) return;
 
     const isAdmin = user?.role === 'admin';
-    const welcomeId = 'welcome-msg';
+    const welcomeId = `welcome-${user?.userId || 'guest'}`;
 
-    if (messages.length === 0) {
-      if (isAdmin) {
-        setMessages([
-          {
-            id: welcomeId,
-            sender: 'assistant',
-            text: `Welcome, Administrator **${user?.name || 'Admin'}**! I am your **FlashDrop Executive Intelligence** assistant. You have full analytical visibility over our MySQL 8.0 relational schema, inventory conservation metrics, bot security flags, and platform GMV.`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            suggestedQuestions: [
-              'Who are our top 3 buyers by total spending?',
-              'Which drop sold out the fastest?',
-              'Check inventory conservation across all drops',
-              'Show high-risk bot attack IPs and suspensions',
-              'Show total platform revenue and paid orders',
-            ],
-          },
-        ]);
-      } else {
-        const customerName = user ? user.name.split(' ')[0] : 'Shopper';
-        setMessages([
-          {
-            id: welcomeId,
-            sender: 'assistant',
-            text: `Hi **${customerName}**! I'm your **FlashDrop Shopper Concierge**. How can I help you today with your orders, wallet balance, active drop reservations, or referral points?`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            suggestedQuestions: [
-              'What is my wallet balance & recent transactions?',
-              'What orders have I placed so far?',
-              'Am I in any waiting room queue or hold?',
-              'Which drops are live right now?',
-              'Show my referral reward points',
-            ],
-          },
-        ]);
-      }
+    if (isAdmin) {
+      setMessages([
+        {
+          id: welcomeId,
+          sender: 'assistant',
+          text: `Welcome, Administrator **${user?.name || 'Admin'}**! I am your **FlashDrop Executive Intelligence** assistant. You have full analytical visibility over our MySQL 8.0 relational schema, inventory conservation metrics, bot security flags, and platform GMV.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedQuestions: [
+            'Who are our top 3 buyers by total spending?',
+            'Which drop sold out the fastest?',
+            'Check inventory conservation across all drops',
+            'Show high-risk bot attack IPs and suspensions',
+            'Show total platform revenue and paid orders',
+          ],
+        },
+      ]);
+    } else {
+      const customerName = user ? user.name.split(' ')[0] : 'Shopper';
+      const customerId = user ? user.userId : 0;
+      setMessages([
+        {
+          id: welcomeId,
+          sender: 'assistant',
+          text: `Hi **${customerName}**! I'm your **FlashDrop Shopper Concierge**. All queries are securely isolated to your account (user_id = ${customerId}). How can I help you today with your orders, wallet balance, active drop reservations, or referral points?`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedQuestions: [
+            'What is my wallet balance & recent transactions?',
+            'What orders have I placed so far?',
+            'Am I in any waiting room queue or hold?',
+            'Which drops are live right now?',
+            'Show my referral reward points',
+          ],
+        },
+      ]);
     }
-  }, [user, loadingUser]);
+  }, [user?.userId, user?.role, loadingUser]);
+
+  const handleSwitchAccount = async (email: string, password: string) => {
+    setShowInChatSwitcher(false);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUser(data.user);
+        window.dispatchEvent(new Event('flashdrop_auth_change'));
+      }
+    } catch (e) {
+      console.error('In-chat switch failed', e);
+    }
+  };
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -257,11 +281,20 @@ export default function FlashDropAiChat() {
               <div>
                 <div className="text-xs font-bold text-white flex items-center space-x-1.5">
                   <span>{isAdmin ? 'FlashDrop Executive AI' : 'FlashDrop Concierge'}</span>
-                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono uppercase ${
-                    isAdmin ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  }`}>
-                    {isAdmin ? 'Admin' : 'Customer'}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowInChatSwitcher(!showInChatSwitcher);
+                    }}
+                    className={`text-[9px] px-1.5 py-0.5 rounded font-mono uppercase flex items-center space-x-1 border transition hover:brightness-125 ${
+                      isAdmin ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    }`}
+                    title="Click to Switch Customer Persona"
+                  >
+                    <span>{user ? user.name.split(' ')[0] : 'Guest'}</span>
+                    <span className="text-[8px]">▼</span>
+                  </button>
                 </div>
                 <div className="text-[10px] text-zinc-400 font-mono flex items-center space-x-1">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -287,6 +320,59 @@ export default function FlashDropAiChat() {
               </button>
             </div>
           </div>
+
+          {/* In-Chat Account Switcher Menu */}
+          {showInChatSwitcher && !isMinimized && (
+            <div className="bg-zinc-900 border-b border-zinc-800 p-2 z-20 space-y-1 font-sans text-xs">
+              <div className="text-[10px] font-mono text-zinc-400 uppercase font-semibold px-1">
+                ⚡ Switch Persona (Instant Isolated State):
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('admin@flashdrop.com', 'admin123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-rose-500/30 text-left hover:bg-zinc-800 text-[11px] text-rose-300 font-mono"
+                >
+                  🛡️ Admin (DBA)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('user_2@flashdrop.com', 'customer123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-emerald-500/30 text-left hover:bg-zinc-800 text-[11px] text-emerald-300 font-mono"
+                >
+                  👤 Cust 1 ($376)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('user_3@flashdrop.com', 'customer123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-emerald-500/30 text-left hover:bg-zinc-800 text-[11px] text-emerald-300 font-mono"
+                >
+                  👤 Cust 2 ($820)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('user_4@flashdrop.com', 'customer123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-emerald-500/30 text-left hover:bg-zinc-800 text-[11px] text-emerald-300 font-mono"
+                >
+                  👤 Cust 3 ($145)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('user_5@flashdrop.com', 'customer123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-emerald-500/30 text-left hover:bg-zinc-800 text-[11px] text-emerald-300 font-mono"
+                >
+                  👤 Cust 4 ($1,250)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAccount('user_6@flashdrop.com', 'customer123')}
+                  className="p-1.5 rounded bg-zinc-950 border border-emerald-500/30 text-left hover:bg-zinc-800 text-[11px] text-emerald-300 font-mono"
+                >
+                  👤 Cust 5 ($55)
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Area (Hidden if Minimized) */}
           {!isMinimized && (
